@@ -1,3 +1,5 @@
+import math
+
 import matplotlib
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
@@ -6,36 +8,48 @@ from matplotlib import style
 import tkinter as tk
 import time
 # from tkinter import ttk
+from matplotlib.ticker import MultipleLocator
+
 matplotlib.use("TkAgg")
 
 LARGE_FONT = ("Verdana", 12)
+LOG_FOLDER = "logs/"
 style.use("ggplot")
-lineStyles = ("b--", "b:", "b-.", "r--", "r:", "r-.", "g--", "g:", "g-.")
+lineStyles = ("r--", "g--", "b--", "r:", "g:", "b:", "r-.", "g-.", "b-.")
 f = Figure(figsize=(5, 5), dpi=100)
 a = f.add_subplot(111)
 
 
 def animate(i):
     a.clear()
+    a.xaxis.set_major_locator(MultipleLocator(10))
+
     # app.update()
     a.set_ylabel('Temperature (C)')
     a.set_xlabel('Time (s)')
     now = time.strftime("%H:%M:%S")
+    date = time.strftime("%d-%m-%y")
     a.title.set_text(now)
     print('Getting Data')
     # need to append datalogs here
     for m in range(3):
+        log_name = LOG_FOLDER + "Temp Log {} Mould {}".format(date,m)
         # section to get data
-        with open("sampleText{}.txt".format(m+1), "r") as f:
-            pull_data = f.read()
-        data_list = pull_data.split('\n')
+        temp_val = (m+1)*math.cos(time.time())
+        with open(log_name, "a+") as f:
+            f.write("{},{}\n".format(now, temp_val))
+
         x_list = []
         y_list = []
-        for eachLine in data_list:
+
+        with open(log_name,"r") as f:
+            read_data = f.readlines()
+
+        for eachLine in read_data:
             if len(eachLine) > 1:
                 x, y = eachLine.split(',')
-                x_list.append(int(x))
-                y_list.append(int(y))
+                x_list.append(x)
+                y_list.append(float(y))
         # at this point need an x list and a y list
 
         # section to save data
@@ -43,10 +57,11 @@ def animate(i):
 
         with open(r'names.csv', 'a', newline='') as csvfile:
             fields = ['first', 'second', 'third']
-            with open(r'name', 'a') as f:
+            with open('name', 'a+') as f:
                 writer = csv.writer(f)
                 writer.writerow(fields)
-        a.plot(x_list, y_list, label=str(m))
+
+        a.plot_date(x_list, y_list, lineStyles[m], label=str(m))
 
 
 class MouldMonitor(tk.Tk):
