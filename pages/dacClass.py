@@ -17,3 +17,6 @@ class DacClass:
         print(f'Marking {self.name} as active')
         self.active = True
         pass
+
+    def write_data(self):
+        pass
