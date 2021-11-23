@@ -1,115 +1,77 @@
+import datetime as dt
 import math
-
-import matplotlib
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from matplotlib.figure import Figure
-import matplotlib.animation as animation
-from matplotlib import style
-import tkinter as tk
 import time
-# from tkinter import ttk
-from matplotlib.ticker import MultipleLocator
+import tkinter as tk
+import matplotlib
+import matplotlib.animation as animation
+import matplotlib.dates as mdates
+from matplotlib import style
+
+from pages.mouldMonitor import MouldMonitor
 
 matplotlib.use("TkAgg")
 
-LARGE_FONT = ("Verdana", 12)
 LOG_FOLDER = "logs/"
+DATE_FORMAT = "%d-%m-%y"
+TIME_FORMAT = "%H:%M:%S"
 style.use("ggplot")
 lineStyles = ("r--", "g--", "b--", "r:", "g:", "b:", "r-.", "g-.", "b-.")
-f = Figure(figsize=(5, 5), dpi=100)
-a = f.add_subplot(111)
 
 
 def animate(i):
-    a.clear()
-    a.xaxis.set_major_locator(MultipleLocator(10))
+    app.a.clear()
 
     # app.update()
-    a.set_ylabel('Temperature (C)')
-    a.set_xlabel('Time (s)')
-    now = time.strftime("%H:%M:%S")
-    date = time.strftime("%d-%m-%y")
-    a.title.set_text(now)
+    app.a.set_ylabel('Temperature (C)')
+    app.a.set_xlabel('Time (s)')
+    now = dt.datetime.now()
+    date = now.strftime(DATE_FORMAT)
+    app.a.title.set_text(dt.datetime.strftime(now, TIME_FORMAT))
     print('Getting Data')
+    data_span = 1.0
     # need to append datalogs here
     for m in range(3):
-        log_name = LOG_FOLDER + "Temp Log {} Mould {}".format(date,m)
+        log_name = LOG_FOLDER + "Temp Log {} Mould {}.csv".format(date, m)
         # section to get data
-        temp_val = (m+1)*math.cos(time.time())
+        temp_val = (m + 1) * math.log(time.time())
         with open(log_name, "a+") as f:
-            f.write("{},{}\n".format(now, temp_val))
+            f.write("{},{}\n".format(dt.datetime.strftime(now, DATE_FORMAT + TIME_FORMAT), temp_val))
+            # f.write("{},{}\n".format(dt.datetime.strftime(now,TIME_FORMAT), temp_val))
 
         x_list = []
         y_list = []
 
-        with open(log_name,"r") as f:
+        with open(log_name, "r") as f:
             read_data = f.readlines()
 
         for eachLine in read_data:
             if len(eachLine) > 1:
                 x, y = eachLine.split(',')
-                x_list.append(x)
+                x_list.append(dt.datetime.strptime(x, DATE_FORMAT + TIME_FORMAT))
                 y_list.append(float(y))
         # at this point need an x list and a y list
 
-        # section to save data
-        import csv
+        app.a.plot_date(x_list, y_list, lineStyles[m], label=str(m), xdate=True)
 
-        with open(r'names.csv', 'a', newline='') as csvfile:
-            fields = ['first', 'second', 'third']
-            with open('name', 'a+') as f:
-                writer = csv.writer(f)
-                writer.writerow(fields)
-
-        a.plot_date(x_list, y_list, lineStyles[m], label=str(m))
-
-
-class MouldMonitor(tk.Tk):
-
-    def __init__(self, *args, **kwargs):
-        tk.Tk.__init__(self, *args, **kwargs)
-
-        # tk.Tk.iconbitmap(self, default="Icon path.ico")
-        tk.Tk.wm_title(self, "Mould Temperature Manager")
-
-        container = tk.Frame(self)
-        container.pack(side="top", fill="both", expand=True)
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
-
-        self.frames = {}
-
-        frame = MonitorPage(container, self)
-
-        self.frames[MonitorPage] = frame
-        self.show_frame(MonitorPage)
-
-        frame.grid(row=0, column=0, sticky="nsew")
-
-    def show_frame(self, cont):
-        frame = self.frames[cont]
-        frame.tkraise()
-
-
-class MonitorPage(tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Mould Heater Readout", font=LARGE_FONT)
-        label.pack(pady=10, padx=10)
-
-        canvas = FigureCanvasTkAgg(f, self)
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-
-        toolbar = NavigationToolbar2Tk(canvas, self)
-        toolbar.update()
-        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        if (x_list[-1] - x_list[0]).total_seconds() > data_span:
+            data_span = (x_list[-1] - x_list[0]).total_seconds()
+    # print(data_span)
+    # if data_span < 60:
+    #     tick_frequency = int(60/5)
+    #     app.a.xaxis.set_major_locator(mdates.SecondLocator(interval=tick_frequency))
+    # elif data_span < 600:
+    #     tick_frequency = int(600/5)
+    #     app.a.xaxis.set_major_locator(mdates.SecondLocator(interval=tick_frequency))
+    # elif data_span > 1000:
+    #     tick_frequency = int(data_span/5)
+    #     app.a.xaxis.set_major_locator(mdates.SecondLocator(interval=tick_frequency))
+    app.a.set_xlim([x_list[0], x_list[-1]])
+    app.graph_frame.setXAxis(app.a,int(data_span/5))
 
 
 app = MouldMonitor()
-ani = animation.FuncAnimation(f, animate, interval=1000)
-# app.mainloop()
-while True:
+ani = animation.FuncAnimation(app.f, animate, interval=1000)
+
+while app.is_running():
     app.update_idletasks()
     app.update()
