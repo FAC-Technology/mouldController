@@ -1,5 +1,5 @@
 import tkinter as tk
-
+import re
 from matplotlib import style
 from matplotlib.figure import Figure
 import matplotlib.dates as m_dates
@@ -128,10 +128,13 @@ class MouldMonitor(tk.Tk):
         self.graph_frame.setXAxis(self.a,int(0.9*data_span/8))
 
     def read_IPs(self,file):
+        pattern = re.compile("^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$")
         with open(file, 'r') as f:
             ips = f.read().splitlines()
-
         ips = list(set(ips))
+        print(ips)
+        ips = [ip for ip in ips if pattern.match(ip)]
+        print(ips)
         return ips
 
     def update_ip_list(self):
