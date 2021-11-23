@@ -1,21 +1,29 @@
 import tkinter as tk
-# from monitorPage import MonitorPage
 from matplotlib.figure import Figure
 import matplotlib.dates as m_dates
 
 from .tempGraph import TempGraph
+from .dacClass import DacClass
 LARGE_FONT = ("Verdana", 12)
 
 
 class MouldMonitor(tk.Tk):
-
-    f = Figure(figsize=(5, 5), dpi=150)
+    _dpi = 100
+    _px = 1200
+    _py = 600
+    f = Figure(figsize=(_px/_dpi, _py/_dpi), dpi=_dpi)
     a = f.add_subplot(111)
 
-    def __init__(self, *args, **kwargs):
+    dac_list = []
+
+    def __init__(self, dac_IPs, *args, **kwargs):
+
+        for ip in dac_IPs:
+            dac_name = f'dac_{len(self.dac_list)}'
+            self.dac_list.append(DacClass(dac_name, ip))
+
         tk.Tk.__init__(self, *args, **kwargs)
         self.running = True
-        # tk.Tk.iconbitmap(self, default="Icon path.ico")
         tk.Tk.wm_title(self, "Mould Temperature Manager")
 
         container = tk.Frame(self)
@@ -49,3 +57,15 @@ class MouldMonitor(tk.Tk):
     def show_frame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
+
+    def updateDACs(self,new_IP_list):
+        for dac in self.dac_list:
+            if dac.address not in new_IP_list and dac.active:
+                dac.set_inactive()
+            elif dac.address in new_IP_list and not dac.active:
+                dac.set_active()
+
+        for ip in new_IP_list:
+            if ip not in [dac.address for dac in self.dac_list]:
+                dac_name = f'dac_{len(self.dac_list)}'
+                self.dac_list.append(DacClass(name=dac_name,IP=ip))
