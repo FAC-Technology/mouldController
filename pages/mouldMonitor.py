@@ -26,6 +26,8 @@ class MouldMonitor(tk.Tk):
     old_ip_list = []
     new_ip_list = []
 
+    a.set_ylabel('Temperature (C)')
+    a.set_xlabel('Time (s)')
     def __init__(self, ip_file, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.ip_check_time = dt.datetime.now()
@@ -42,6 +44,7 @@ class MouldMonitor(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
         self.frames = {}
         self.a.xaxis.set_major_formatter(m_dates.DateFormatter("%H:%M"))
+        self.plts = []
 
         self.graph_frame = TempGraph(container, self, self.f)
         self.button_frame = ButtonPanel(container)
@@ -55,9 +58,6 @@ class MouldMonitor(tk.Tk):
 
         exit_button = tk.Button(self, text="Exit", command=self.close)
         exit_button.pack(pady=2)
-
-        self.animate(0)  # do an initial plot call
-        self.f.legend()  # allows for clean legend plotting
 
         self.button_list = []
         for dac in self.dac_list:
@@ -76,33 +76,27 @@ class MouldMonitor(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
-    def animate(self, i):
+    def animate(self,i):
         now = dt.datetime.now()
-
-        # self.a.clear()
         self.a.title.set_text(dt.datetime.strftime(now, defaults.TIME_FORMAT))
-        self.a.set_ylabel('Temperature (C)')
-        self.a.set_xlabel('Time (s)')
-        data_span = 1.0
-        plts = []
         for j, dac in enumerate(self.dac_list):
-            if i == 0:
-                plts.append(self.a.plot_date(dac.timeData,  # x list
+            if len(self.plts) < 2:
+                self.plts.append(self.a.plot_date(dac.timeData,  # x list
                                              dac.temperatureData,  # y list
                                              defaults.lineStyles[j],  # line style
                                              label=dac.name,  # label
                                              xdate=True)
-                            )  # correct as date
+                                )  # correct as date
             else:
                 if dac.active:
                     dac.get_data()
                     dac.write_log()
-                    self.a.plot_date(dac.timeData[-1],
-                                     dac.temperatureData[-1],
-                                     defaults.lineStyles[j],
-                                     label=dac.name,
-                                     xdate=True
-                                     )
+                    self.plts[j][0].axes.lines[j].set_xdata(dac.timeData)
+                    self.plts[j][0].axes.lines[j].set_ydata(dac.temperatureData)
+
+                print('drawing')
+        self.a.set_xlim(dac.timeData[0]-dt.timedelta(minutes=1),
+                        dac.timeData[-1]+dt.timedelta(minutes=1))
 
     def read_ips(self, file):
         pattern = re.compile("^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$")  # regexp magic to check IP format

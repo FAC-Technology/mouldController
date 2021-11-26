@@ -3,6 +3,7 @@ from logging import handlers
 import os
 
 LOG_FOLDER = "mould logs/"
+EXPORT_FOLDER = os.path.expanduser("~/Desktop/myfile.txt")
 IP_FILE = "IP_ADDRESSES.txt"
 IP_CHECK_PERIOD = 0.05  # minutes
 DATE_FORMAT = "%d-%m-%y"
