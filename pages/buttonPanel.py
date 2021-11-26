@@ -4,7 +4,7 @@ from . import defaults
 
 class ButtonPanel(tk.Frame):
 
-    def __init__(self, parent, controller):
+    def __init__(self, parent):
         tk.Frame.__init__(self, parent)
         # label = tk.title(self, text="Heater Management", font=defaults.LARGE_FONT)
         self.button_rows = []
@@ -12,17 +12,14 @@ class ButtonPanel(tk.Frame):
         self.grid_columnconfigure(2, weight=1)
         self.msg_box = tk.Text(
                 self,
-                height=4,
-                width=20,
-                font=defaults.SMALL_FONT
+                height=14,
+                width=30,
+                font=defaults.SMALL_FONT,
+                wrap=tk.WORD
             )
         self.msg_box.insert('end', 'Info')
         self.msg_box.config(state='disabled')
         self.msg_box.grid(row=0, columnspan=2)
-
-
-    def update_buttons(self, dac_list):
-        pass
 
     def create_row(self, parent, dac):
         self.button_rows.append({})

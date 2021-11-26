@@ -44,7 +44,7 @@ class MouldMonitor(tk.Tk):
         self.a.xaxis.set_major_formatter(m_dates.DateFormatter("%H:%M"))
 
         self.graph_frame = TempGraph(container, self, self.f)
-        self.button_frame = ButtonPanel(container, self)
+        self.button_frame = ButtonPanel(container)
         self.frames[TempGraph] = self.graph_frame
         self.frames[ButtonPanel] = self.button_frame
 
