@@ -21,3 +21,4 @@ while app.is_running():
     app.update()
     if (dt.datetime.now() - app.ip_check_time).total_seconds() > defaults.IP_CHECK_PERIOD * 60:
         app.update_ip_list()
+        app.initialise_plots()

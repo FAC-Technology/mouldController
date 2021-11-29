@@ -22,6 +22,7 @@ class DacClass:
         self.name = "dac_" + address.split('.')[-1]
         self.address = address
         self.active = True  # each DAC has an 'active' attribute for if the nanodac is currently working.
+        self.initialised = False  # ensure each DAC is only started once.
         self.date = dt.datetime.now().strftime(defaults.DATE_FORMAT)
         self.timeData = []  # in memory time list for plotting
         self.temperatureData = []  # in memory temperature list for plotting

@@ -86,12 +86,14 @@ class MouldMonitor(tk.Tk):
 
     def initialise_plots(self):
         for j, dac in enumerate(self.dac_list):
-            self.a.plot_date(dac.timeData,  # x list
-                             dac.temperatureData,  # y list
-                             defaults.lineStyles[j],  # line style
-                             label=dac.name,  # label
-                             xdate=True)
-
+            if not dac.initialised:
+                dac.initialised = True
+                self.a.plot_date(dac.timeData,  # x list
+                                 dac.temperatureData,  # y list
+                                 defaults.lineStyles[j],  # line style
+                                 label=dac.name,  # label
+                                 xdate=True)
+        self.f.legend()
     def animate(self, i):
         now = dt.datetime.now()
         self.a.title.set_text(dt.datetime.strftime(now, defaults.TIME_FORMAT))
@@ -99,7 +101,7 @@ class MouldMonitor(tk.Tk):
             # print('scraping')
             # dac.scrape_data()
             # print('finished')
-            if dac.active:
+            if dac.active and dac.initialised:
                 dac.get_data()
                 dac.write_log()
                 self.a.lines[j].set_xdata(dac.timeData)

@@ -1,0 +1,21 @@
+2021-11-29 15:19:17,487	INFO -- main.py:17 -- Starting running
+2021-11-29 15:31:26,918	INFO -- main.py:17 -- Starting running
+2021-11-29 15:46:21,828	INFO -- main.py:17 -- Starting running
+2021-11-29 15:46:48,773	INFO -- mouldMonitor.py:139 -- Adding 192.168.0.3 to list of DACs
+2021-11-29 15:47:56,303	INFO -- main.py:17 -- Starting running
+2021-11-29 15:48:08,515	INFO -- main.py:17 -- Starting running
+2021-11-29 15:48:29,948	INFO -- main.py:17 -- Starting running
+2021-11-29 15:50:19,547	INFO -- main.py:17 -- Starting running
+2021-11-29 15:50:25,463	INFO -- mouldMonitor.py:139 -- Adding 192.168.0.4 to list of DACs
+2021-11-29 15:52:26,289	INFO -- main.py:17 -- Starting running
+2021-11-29 15:52:41,222	INFO -- mouldMonitor.py:140 -- Adding 192.168.0.5 to list of DACs
+2021-11-29 15:53:07,584	INFO -- main.py:17 -- Starting running
+2021-11-29 15:53:13,526	INFO -- mouldMonitor.py:140 -- Adding 192.168.0.4 to list of DACs
+2021-11-29 15:54:19,713	INFO -- main.py:17 -- Starting running
+2021-11-29 15:55:36,268	INFO -- main.py:17 -- Starting running
+2021-11-29 15:56:08,282	INFO -- main.py:17 -- Starting running
+2021-11-29 15:56:28,260	INFO -- main.py:17 -- Starting running
+2021-11-29 15:57:49,763	INFO -- main.py:17 -- Starting running
+2021-11-29 15:58:16,713	INFO -- mouldMonitor.py:141 -- Adding 192.168.0.5 to list of DACs
+2021-11-29 15:58:27,082	INFO -- main.py:17 -- Starting running
+2021-11-29 15:59:19,464	INFO -- main.py:17 -- Starting running
