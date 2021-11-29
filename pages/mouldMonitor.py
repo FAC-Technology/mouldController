@@ -4,7 +4,8 @@ from matplotlib import style
 from matplotlib.figure import Figure
 import matplotlib.dates as m_dates
 import datetime as dt
-
+from collections import deque
+import time
 from .tempGraph import TempGraph
 from .buttonPanel import ButtonPanel
 from .dacClass import DacClass
@@ -28,10 +29,17 @@ class MouldMonitor(tk.Tk):
 
     a.set_ylabel('Temperature (C)')
     a.set_xlabel('Time (s)')
+
     def __init__(self, ip_file, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.ip_check_time = dt.datetime.now()
         self.read_ips(ip_file)
+        while not self.new_ip_list:
+            print('Add a DAC IP to IP_ADDRESSES.txt to begin')
+            defaults.log.info(msg='No IPs in list')
+            time.sleep(5)
+            self.read_ips(ip_file)
+
         for ip in self.new_ip_list:
             self.dac_list.append(DacClass(ip))
 
@@ -76,27 +84,32 @@ class MouldMonitor(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
-    def animate(self,i):
+    def initialise_plots(self):
+        for j, dac in enumerate(self.dac_list):
+            self.a.plot_date(dac.timeData,  # x list
+                             dac.temperatureData,  # y list
+                             defaults.lineStyles[j],  # line style
+                             label=dac.name,  # label
+                             xdate=True)
+
+    def animate(self, i):
         now = dt.datetime.now()
         self.a.title.set_text(dt.datetime.strftime(now, defaults.TIME_FORMAT))
         for j, dac in enumerate(self.dac_list):
-            if len(self.plts) < 2:
-                self.plts.append(self.a.plot_date(dac.timeData,  # x list
-                                             dac.temperatureData,  # y list
-                                             defaults.lineStyles[j],  # line style
-                                             label=dac.name,  # label
-                                             xdate=True)
-                                )  # correct as date
-            else:
-                if dac.active:
-                    dac.get_data()
-                    dac.write_log()
-                    self.plts[j][0].axes.lines[j].set_xdata(dac.timeData)
-                    self.plts[j][0].axes.lines[j].set_ydata(dac.temperatureData)
+            # print('scraping')
+            # dac.scrape_data()
+            # print('finished')
+            if dac.active:
+                dac.get_data()
+                dac.write_log()
+                self.a.lines[j].set_xdata(dac.timeData)
+                self.a.lines[j].set_ydata(dac.temperatureData)
 
-                print('drawing')
-        self.a.set_xlim(dac.timeData[0]-dt.timedelta(minutes=1),
-                        dac.timeData[-1]+dt.timedelta(minutes=1))
+        left_limit = min([dac.timeData[0] for dac in self.dac_list])
+        right_limit = max([dac.timeData[-1] for dac in self.dac_list])
+
+        self.a.set_xlim(left_limit - dt.timedelta(minutes=1),
+                        right_limit + dt.timedelta(minutes=1))
 
     def read_ips(self, file):
         pattern = re.compile("^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$")  # regexp magic to check IP format
