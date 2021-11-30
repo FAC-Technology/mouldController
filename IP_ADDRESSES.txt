@@ -1,4 +1,3 @@
 # IP address list for Eurotherm nanodacs
 # Any line not of form X.X.X.X is ignored
-192.168.0.1
-192.168.0.2
+#192.168.0.1
