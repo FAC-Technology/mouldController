@@ -9,6 +9,8 @@ import os
 
 from matplotlib import style
 from matplotlib.figure import Figure
+import matplotlib.patches as patches
+import matplotlib.dates as mdates
 
 import pandas as pd
 from random import random
@@ -134,9 +136,10 @@ class DacClass:
                             _py / _dpi),
                    dpi=_dpi)
         a = f.add_subplot(111)
+
         a.set_ylabel('Temperature (C)')
         a.set_xlabel('Time (s)')
-
+        a.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
         cure_results = self.cure_cycle_check_corner_method()
         # cure results is a list:
         # [cureSuccess?,[times],postcureSuccess?,[PCtimes]]
@@ -152,6 +155,24 @@ class DacClass:
             y_data = self.temperatureData[start_index:end_index]
             a.title.set_text(f'Cure Results for {self.name} between {dt.datetime.strftime(start_graph_time, defaults.TIME_FORMAT)} and '
                              f'{dt.datetime.strftime(end_graph_time, defaults.TIME_FORMAT)}')
+            rect_postcure = patches.Rectangle(
+                (mdates.date2num(cure_results[3][0]),
+                 ccq.Fmin),
+                ccq.D_C/(24*3600),  # width
+                ccq.Fmax - ccq.Fmin,  # height
+                color='r',
+                alpha=0.2
+                )
+            rect_cure = patches.Rectangle((mdates.date2num(cure_results[1][0]),
+                                      ccq.Emin),
+                                     ccq.B_A/(24*3600), # mdates.date2num(dt.timedelta(seconds=ccq.B_A)), # width
+                                     ccq.Emax-ccq.Emin, # height
+                                     color='g',
+                                     alpha=0.2
+                                     )
+            a.add_patch(rect_postcure)
+            a.add_patch(rect_cure)
+
         else:
             x_data = self.timeData
             y_data = self.temperatureData
@@ -163,8 +184,11 @@ class DacClass:
                     label=self.name,  # label
                     xdate=True)
         details_text = self._assemble_check_string(cure_results)
+        left_limit = x_data[0] - dt.timedelta(minutes=1)
+        right_limit = x_data[-1]  + dt.timedelta(minutes=1)
 
-        print(f'there you go {self.temperatureData[-1]}')
+        a.set_xlim(left_limit,
+                        right_limit)
 
         out_graph_name = os.path.join(defaults.EXPORT_PATH,
                                defaults.GRAPH_EXPORT_NAME.format(self.name,
@@ -184,7 +208,10 @@ class DacClass:
         # document every time temp profile enters and leaves windows
         # considers success when an even list of times has a start and end time
         # longer than the required time.
-        average_window = 0.05
+
+        # algorithm is not that easy to understand but I think it's sound.
+        # See the readme for a longer explanation.
+        average_window = 2/60  # sample every two minutes
         post_cured = False
         post_cure_entered = False
         post_cure_times = []  # an even numbered list of entry / exit times to the post_cure window
@@ -215,8 +242,8 @@ class DacClass:
             if len(post_cure_times) % 2 == 0 and post_cure_times:
                 if (post_cure_times[-1] - post_cure_times[0]).total_seconds() > ccq.D_C:
                     post_cured = True
-            elif post_cure_times:
-                if (post_cure_times[-1] - post_cure_times[0]).total_seconds() > ccq.D_C:
+            elif len(cure_window_times) % 2 == 0 and post_cure_times and \
+                (post_cure_times[-1] - post_cure_times[0]).total_seconds() > 1.05 * ccq.D_C:
                     post_cured = False
                     break
 
@@ -235,8 +262,8 @@ class DacClass:
             if len(cure_window_times) % 2 == 0 and cure_window_times and \
                     (cure_window_times[-1] - cure_window_times[0]).total_seconds() > ccq.B_A:
                 cured = True
-            elif cure_window_times:
-                if (cure_window_times[-1] - cure_window_times[0]).total_seconds() > ccq.B_A:
+            elif len(cure_window_times) % 2 == 0 and cure_window_times and \
+                    (cure_window_times[-1] - cure_window_times[0]).total_seconds() > ccq.B_A:
                     break
         return [cured, cure_window_times, post_cured, post_cure_times]
 

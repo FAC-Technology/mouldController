@@ -85,3 +85,71 @@
 2021-11-30 14:09:17,697	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
 2021-11-30 14:21:44,311	INFO -- main.py:17 -- Starting running
 2021-11-30 14:25:12,177	INFO -- main.py:17 -- Starting running
+2021-11-30 14:39:41,578	INFO -- main.py:22 -- Starting running
+2021-11-30 14:40:13,001	INFO -- main.py:22 -- Starting running
+2021-11-30 14:40:35,070	INFO -- main.py:22 -- Starting running
+2021-11-30 14:41:04,101	INFO -- main.py:22 -- Starting running
+2021-11-30 14:41:18,182	INFO -- main.py:22 -- Starting running
+2021-11-30 14:42:28,191	INFO -- main.py:22 -- Starting running
+2021-11-30 16:18:33,251	INFO -- main.py:22 -- Starting running
+2021-11-30 16:22:24,337	INFO -- main.py:22 -- Starting running
+2021-11-30 16:22:29,402	INFO -- main.py:22 -- Starting running
+2021-11-30 16:23:49,387	INFO -- main.py:22 -- Starting running
+2021-11-30 16:24:04,519	INFO -- main.py:22 -- Starting running
+2021-11-30 16:39:01,206	INFO -- main.py:22 -- Starting running
+2021-11-30 16:39:28,293	INFO -- main.py:22 -- Starting running
+2021-11-30 16:39:30,484	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 16:40:26,060	INFO -- main.py:22 -- Starting running
+2021-11-30 16:40:27,259	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 16:42:48,650	INFO -- main.py:22 -- Starting running
+2021-11-30 16:43:06,110	INFO -- main.py:22 -- Starting running
+2021-11-30 16:43:07,419	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 16:44:14,437	INFO -- main.py:22 -- Starting running
+2021-11-30 16:44:16,000	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 16:46:47,020	INFO -- main.py:22 -- Starting running
+2021-11-30 16:46:48,483	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 16:48:30,864	INFO -- main.py:22 -- Starting running
+2021-11-30 16:48:32,340	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 16:48:57,171	INFO -- main.py:22 -- Starting running
+2021-11-30 16:48:59,885	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 16:49:39,832	INFO -- main.py:22 -- Starting running
+2021-11-30 16:49:41,659	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 16:49:56,040	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 16:50:13,048	INFO -- main.py:22 -- Starting running
+2021-11-30 16:54:14,031	INFO -- main.py:22 -- Starting running
+2021-11-30 16:54:16,076	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 16:55:20,695	INFO -- main.py:22 -- Starting running
+2021-11-30 16:55:47,114	INFO -- main.py:22 -- Starting running
+2021-11-30 16:56:01,541	INFO -- main.py:22 -- Starting running
+2021-11-30 16:56:02,837	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 16:56:56,065	INFO -- main.py:22 -- Starting running
+2021-11-30 16:56:57,284	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:04:06,120	INFO -- main.py:22 -- Starting running
+2021-11-30 17:04:10,100	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:04:12,665	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:04:43,278	INFO -- main.py:22 -- Starting running
+2021-11-30 17:04:44,607	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:04:47,420	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:04:58,750	INFO -- main.py:22 -- Starting running
+2021-11-30 17:05:02,399	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:07:26,110	INFO -- main.py:22 -- Starting running
+2021-11-30 17:09:22,479	INFO -- main.py:22 -- Starting running
+2021-11-30 17:13:13,588	INFO -- main.py:22 -- Starting running
+2021-11-30 17:13:15,274	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:13:17,604	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:14:28,563	INFO -- main.py:22 -- Starting running
+2021-11-30 17:14:30,053	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:15:36,370	INFO -- main.py:22 -- Starting running
+2021-11-30 17:15:38,374	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:15:55,878	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:16:58,661	INFO -- main.py:22 -- Starting running
+2021-11-30 17:17:00,232	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:17:01,158	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:18:24,082	INFO -- main.py:22 -- Starting running
+2021-11-30 17:18:25,433	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:31:38,529	INFO -- main.py:22 -- Starting running
+2021-11-30 17:32:02,832	INFO -- main.py:22 -- Starting running
+2021-11-30 17:32:07,751	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 17:33:15,013	INFO -- main.py:22 -- Starting running
+2021-11-30 17:33:32,559	INFO -- main.py:22 -- Starting running
+2021-11-30 17:33:35,645	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document

@@ -2,6 +2,7 @@ from fpdf import FPDF
 from . import defaults
 import os
 
+
 class PDF(FPDF):
     def __init__(self, title, logo):
         FPDF.__init__(self, orientation="L", format="A4")

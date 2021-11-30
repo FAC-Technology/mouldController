@@ -8,12 +8,17 @@ import os
 
 matplotlib.use("TkAgg")
 
+# make the destination for exports, if not existing already.
+# exists in /Documents/Mould Temperature Exports
+
 if not os.path.isdir(defaults.EXPORT_PATH):
     os.mkdir(defaults.EXPORT_PATH)
 
+# initialise the class object holding the window.
 app = MouldMonitor(ip_file=defaults.IP_FILE)
+# every 1000ms, update the graph using the animate method
 ani = animation.FuncAnimation(app.f, app.animate, interval=1000)
-app.initialise_plots()
+app.initialise_plots()  # initialise the plots with the existing data.
 defaults.log.info('Starting running')
 
 while app.is_running():

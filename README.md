@@ -14,3 +14,23 @@ python -m venv venv; .\venv\Scripts\activate; pip install -r requirements.txt
 
 5. Script is run using
   python main.py
+
+
+EXPLANATION OF CURE CYCLE DETECTION ALGORITHM:
+The temperature is examined from the present time backwards in 3minute bins. If a 3 minute bin 
+within the temperature range of postcuring is detected, the time is added to the end of an empty list. 
+If the temperature leaves the window, the time is inserted at the start of 
+the list. If the list is an odd length, the temperature at the point of examination
+must be within the cure boundaries. If it is even, the temperature history must've
+left the region. 
+
+This gives us the following possibilities:
+
+1. The list of times is of zero length - the panel never reached the postcure temp.
+2. The list of items is of length 1 - the time history does not see the temperature
+permanently leave the temperature boundary. Unlikely? 
+3. The list is of even length, and the first and last times are greater than the
+required cure time - the panel reached the right window, but may have left in between.
+This is noted in the results, when 'Monitor dac_X' is pressed. 
+4. The list is of any non-zero length and first and last times are not greater than the 
+required post cure time. In this case, the 
