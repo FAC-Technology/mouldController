@@ -1,14 +1,22 @@
 import datetime as dt
 import math
 import os
+
 # import requests
 # import urllib
 # from lxml import html
 # from bs4 import BeautifulSoup as bsoup
+
+from matplotlib import style
+from matplotlib.figure import Figure
+
 import pandas as pd
 from random import random
 from . import cureCycleReqs as ccq
 from . import defaults
+from .outputPDF import PDF
+
+style.use("ggplot")
 
 """
 DacClass template is responsible for managing the operations completed 
@@ -66,6 +74,7 @@ class DacClass:
                                                            dt.datetime.now().microsecond * 1e-6)))
         self.temperatureData.append(temperature)
         self.timeData.append(dt.datetime.now())
+
     #
     # def scrape_data(self):
     #     url = 'http://time-time.net/timer/digital-clock.php'
@@ -78,14 +87,16 @@ class DacClass:
     #     # time = soup.find("container", {"class": "timenow"}).get_text(strip=True)
     #     print(time.text)
 
-    def set_inactive(self):
-        print(f'Marking {self.name} as inactive')
-        self.active = False
-        pass
-
     def set_active(self):
+        # mark DAC as active, and data should be collected and updated
         print(f'Marking {self.name} as active')
         self.active = True
+        pass
+
+    def set_inactive(self):
+        # disable DAC so no data is being retrieved anymore.
+        print(f'Marking {self.name} as inactive')
+        self.active = False
         pass
 
     def write_log(self):
@@ -100,32 +111,72 @@ class DacClass:
     def check_data(self, msg_box):
         monitor_output = self._assemble_check_string(self.cure_cycle_check_corner_method())
         if self.monitorPass:
-            msg_box.config(state='normal')
-            msg_box.delete(1.0, 'end')  # delete lines 1, 2, 3, 4
-            msg_box.insert(1.0, f'{monitor_output}')
-            msg_box.insert(1.0, 'Info\n')
-            msg_box.update()
-            msg_box.config(state='disabled')
-        elif isinstance(monitor_output,type(None)):
-            msg_box.config(state='normal')
-            msg_box.delete(1.0, 'end')  # delete lines 1, 2, 3, 4
-            msg_box.insert(1.0, f'Probably not enough time data to search')
-            msg_box.insert(1.0, f'No cure cycle results for {self.name}\n')
-            msg_box.insert(1.0, 'Info\n')
-            msg_box.update()
-            msg_box.config(state='disabled')
+            self._write_to_box(msg_box, monitor_output)
+
+        elif isinstance(monitor_output, type(None)):
+            msg = f'No cure cycle results for {self.name}\n Probably not enough time data to search'
+            self._write_to_box(msg_box,msg)
+
         else:
-            msg_box.config(state='normal')
-            msg_box.delete(1.0, 'end')  # delete lines 1, 2, 3, 4
-            msg_box.insert(1.0, f'{monitor_output}')
-            msg_box.insert(1.0, 'Info\n')
-            msg_box.update()
-            msg_box.config(state='disabled')
+            self._write_to_box(msg_box,monitor_output)
 
     def export_data(self, msg_box):
-        monitor_output = self._assemble_check_string(self.cure_cycle_check_corner_method())
-        # need to export
+        # method gets the cure results, and writes a graph to a file in mould temp exports as a .png
+        # the .png is then written to a .pdf which also has some info about what happened as a more descriptive
+        # output than what went exactly in the cure cycle.
+        # if the cure cycle was a failure, it just prints the graph of all temperature history stored in memory
+        now = dt.datetime.now()
+
+        _dpi = 100
+        _px = 1200
+        _py = 600
+        f = Figure(figsize=(_px / _dpi,
+                            _py / _dpi),
+                   dpi=_dpi)
+        a = f.add_subplot(111)
+        a.set_ylabel('Temperature (C)')
+        a.set_xlabel('Time (s)')
+
+        cure_results = self.cure_cycle_check_corner_method()
+        # cure results is a list:
+        # [cureSuccess?,[times],postcureSuccess?,[PCtimes]]
+        def nearest(items, pivot):
+            return min(items, key=lambda x: abs(x - pivot))
+
+        if cure_results[0] and cure_results[2]:
+            start_graph_time = cure_results[1][0] - dt.timedelta(minutes=20)
+            end_graph_time = cure_results[3][-1] + dt.timedelta(minutes=20)
+            start_index = self.timeData.index(nearest(self.timeData, start_graph_time))
+            end_index = self.timeData.index(nearest(self.timeData, end_graph_time))
+            x_data = self.timeData[start_index:end_index]
+            y_data = self.temperatureData[start_index:end_index]
+            a.title.set_text(f'Cure Results for {self.name} between {dt.datetime.strftime(start_graph_time, defaults.TIME_FORMAT)} and '
+                             f'{dt.datetime.strftime(end_graph_time, defaults.TIME_FORMAT)}')
+        else:
+            x_data = self.timeData
+            y_data = self.temperatureData
+            a.title.set_text(f'Time history for {self.name}, no cure cycle was detected')
+
+        a.plot_date(x_data,
+                    y_data,
+                    'k-',
+                    label=self.name,  # label
+                    xdate=True)
+        details_text = self._assemble_check_string(cure_results)
+
         print(f'there you go {self.temperatureData[-1]}')
+
+        out_graph_name = os.path.join(defaults.EXPORT_PATH,
+                               defaults.GRAPH_EXPORT_NAME.format(self.name,
+                                                                 now.strftime(defaults.FNAME_TIME_FORMAT)))
+        f.savefig(out_graph_name)
+
+        out_file = PDF(title=self.name,
+                       logo=defaults.LOGO_FILE)
+        out_file.add_page()
+        out_file.insert_graph(graph_loc=out_graph_name+'.png')
+        out_file.output(out_graph_name + '.pdf')
+        self._write_to_box(msg_box, f'Output PDF to {out_graph_name}')
 
     def cure_cycle_check_corner_method(self):
         # go back in time and find each corner,
@@ -140,7 +191,7 @@ class DacClass:
         cured = False
         cure_window_entered = False
         cure_window_times = []
-        if (self.timeData[-1]-self.timeData[0]).total_seconds() < ccq.B_A:
+        if (self.timeData[-1] - self.timeData[0]).total_seconds() < ccq.B_A:
             return [cured, cure_window_times, post_cured, post_cure_times]
 
         df = pd.DataFrame({'Datetime': self.timeData, 'temperature': self.temperatureData})
@@ -175,11 +226,11 @@ class DacClass:
                 break
             if ccq.cure_bounds(df['temperature'][i]) and not cure_window_entered:
                 cure_window_entered = True
-                cure_window_times.insert(0,df.temperature.index[i])
+                cure_window_times.insert(0, df.temperature.index[i])
 
             if not ccq.cure_bounds(df['temperature'][i]) and cure_window_entered:
-                    cure_window_entered = False
-                    cure_window_times.insert(0, df.temperature.index[i])
+                cure_window_entered = False
+                cure_window_times.insert(0, df.temperature.index[i])
 
             if len(cure_window_times) % 2 == 0 and cure_window_times and \
                     (cure_window_times[-1] - cure_window_times[0]).total_seconds() > ccq.B_A:
@@ -193,7 +244,7 @@ class DacClass:
     def _assemble_check_string(check_outcome):
         ret_string = ""
         if check_outcome[0]:
-            cure_start_stop = (check_outcome[1][-1] - check_outcome[1][0]).total_seconds()/60
+            cure_start_stop = (check_outcome[1][-1] - check_outcome[1][0]).total_seconds() / 60
             ret_string += f"Panel is cured, and spent {round(cure_start_stop)} minutes at temperature.\n"
             if len(check_outcome[1]) > 2:
                 interrupt_times = "\n".join([str(t.time()) for t in check_outcome[1][1:-1:1]])
@@ -201,3 +252,12 @@ class DacClass:
             return ret_string
         else:
             ret_string += 'No cure cycle detected'
+
+    @staticmethod
+    def _write_to_box(msg_box, text):
+        msg_box.config(state='normal')
+        msg_box.delete(1.0, 'end')  # delete lines 1, 2, 3, 4
+        msg_box.insert(1.0, f'{text}')
+        msg_box.insert(1.0, 'Info\n')
+        msg_box.update()
+        msg_box.config(state='disabled')

@@ -13,7 +13,6 @@ from . import defaults
 
 style.use("ggplot")
 
-
 class MouldMonitor(tk.Tk):
     _dpi = 100
     _px = 1200

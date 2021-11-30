@@ -19,3 +19,69 @@
 2021-11-29 15:58:16,713	INFO -- mouldMonitor.py:141 -- Adding 192.168.0.5 to list of DACs
 2021-11-29 15:58:27,082	INFO -- main.py:17 -- Starting running
 2021-11-29 15:59:19,464	INFO -- main.py:17 -- Starting running
+2021-11-29 17:22:00,663	INFO -- mouldMonitor.py:39 -- No IPs in list
+2021-11-29 17:22:05,679	INFO -- mouldMonitor.py:39 -- No IPs in list
+2021-11-29 17:22:10,691	INFO -- mouldMonitor.py:39 -- No IPs in list
+2021-11-29 17:22:15,693	INFO -- mouldMonitor.py:39 -- No IPs in list
+2021-11-29 17:22:20,705	INFO -- mouldMonitor.py:39 -- No IPs in list
+2021-11-29 17:22:25,721	INFO -- mouldMonitor.py:39 -- No IPs in list
+2021-11-29 17:22:30,729	INFO -- mouldMonitor.py:39 -- No IPs in list
+2021-11-30 10:22:40,409	INFO -- mouldMonitor.py:39 -- No IPs in list
+2021-11-30 10:22:45,411	INFO -- mouldMonitor.py:39 -- No IPs in list
+2021-11-30 10:22:50,411	INFO -- mouldMonitor.py:39 -- No IPs in list
+2021-11-30 10:22:55,498	INFO -- main.py:17 -- Starting running
+2021-11-30 10:56:57,638	INFO -- main.py:17 -- Starting running
+2021-11-30 12:01:39,718	INFO -- main.py:17 -- Starting running
+2021-11-30 12:03:14,373	INFO -- main.py:17 -- Starting running
+2021-11-30 12:04:01,365	INFO -- main.py:17 -- Starting running
+2021-11-30 12:04:57,614	INFO -- main.py:17 -- Starting running
+2021-11-30 12:35:31,743	INFO -- main.py:17 -- Starting running
+2021-11-30 12:36:01,110	INFO -- main.py:17 -- Starting running
+2021-11-30 12:36:49,800	INFO -- main.py:17 -- Starting running
+2021-11-30 12:40:43,792	INFO -- main.py:17 -- Starting running
+2021-11-30 12:48:08,759	INFO -- main.py:17 -- Starting running
+2021-11-30 12:48:24,251	INFO -- main.py:17 -- Starting running
+2021-11-30 12:48:44,571	INFO -- main.py:17 -- Starting running
+2021-11-30 12:50:34,405	INFO -- main.py:17 -- Starting running
+2021-11-30 12:51:25,091	INFO -- main.py:17 -- Starting running
+2021-11-30 12:51:53,708	INFO -- main.py:17 -- Starting running
+2021-11-30 12:53:21,587	INFO -- main.py:17 -- Starting running
+2021-11-30 12:53:36,294	INFO -- main.py:17 -- Starting running
+2021-11-30 12:53:39,354	INFO -- main.py:17 -- Starting running
+2021-11-30 12:54:23,535	INFO -- main.py:17 -- Starting running
+2021-11-30 12:56:33,476	INFO -- main.py:17 -- Starting running
+2021-11-30 12:57:43,747	INFO -- main.py:17 -- Starting running
+2021-11-30 13:00:18,919	INFO -- main.py:17 -- Starting running
+2021-11-30 13:02:02,120	INFO -- main.py:17 -- Starting running
+2021-11-30 13:04:24,622	INFO -- main.py:17 -- Starting running
+2021-11-30 13:05:39,251	INFO -- main.py:17 -- Starting running
+2021-11-30 13:05:53,393	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 13:06:02,657	INFO -- main.py:17 -- Starting running
+2021-11-30 13:06:24,171	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 13:08:45,262	INFO -- main.py:17 -- Starting running
+2021-11-30 13:08:49,714	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 13:10:11,620	INFO -- main.py:17 -- Starting running
+2021-11-30 13:10:13,312	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 13:12:40,515	INFO -- main.py:17 -- Starting running
+2021-11-30 13:12:45,585	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 13:17:03,142	INFO -- main.py:17 -- Starting running
+2021-11-30 13:17:19,521	INFO -- dacClass.py:53 -- Reading log from mould logs/Temperature Log 29-11-21 dac_2.csv
+2021-11-30 13:17:19,529	INFO -- mouldMonitor.py:140 -- Adding 192.168.0.2 to list of DACs
+2021-11-30 13:17:29,379	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 13:17:50,585	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 13:19:56,756	INFO -- main.py:17 -- Starting running
+2021-11-30 13:20:05,685	INFO -- mouldMonitor.py:140 -- Adding 192.168.0.2 to list of DACs
+2021-11-30 13:20:10,119	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 13:21:20,299	INFO -- main.py:17 -- Starting running
+2021-11-30 13:21:22,499	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 13:21:35,393	INFO -- main.py:17 -- Starting running
+2021-11-30 13:21:38,462	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 13:21:41,446	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 14:05:42,385	INFO -- main.py:17 -- Starting running
+2021-11-30 14:06:56,483	INFO -- main.py:17 -- Starting running
+2021-11-30 14:08:58,617	INFO -- main.py:17 -- Starting running
+2021-11-30 14:09:03,181	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 14:09:14,517	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 14:09:17,697	INFO -- fpdf.py:2958 -- Substitution of '{nb}' was performed in the document
+2021-11-30 14:21:44,311	INFO -- main.py:17 -- Starting running
+2021-11-30 14:25:12,177	INFO -- main.py:17 -- Starting running
