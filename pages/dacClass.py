@@ -242,10 +242,12 @@ class DacClass:
             if len(post_cure_times) % 2 == 0 and post_cure_times:
                 if (post_cure_times[-1] - post_cure_times[0]).total_seconds() > ccq.D_C:
                     post_cured = True
-            elif len(cure_window_times) % 2 == 0 and post_cure_times and \
+            elif len(post_cure_times) % 2 == 0 and post_cure_times and \
                 (post_cure_times[-1] - post_cure_times[0]).total_seconds() > 1.05 * ccq.D_C:
                     post_cured = False
                     break
+        if len(post_cure_times) % 2 == 0 and post_cure_times and not post_cured:
+            i = len(df)
 
         while not cured:
             i -= 1

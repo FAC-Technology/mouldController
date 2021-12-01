@@ -32,5 +32,6 @@ permanently leave the temperature boundary. Unlikely?
 3. The list is of even length, and the first and last times are greater than the
 required cure time - the panel reached the right window, but may have left in between.
 This is noted in the results, when 'Monitor dac_X' is pressed. 
-4. The list is of any non-zero length and first and last times are not greater than the 
-required post cure time. In this case, the 
+4. The list is of even length but does not span enough time - the 
+algorithm searches until the beginnning of the time history. Tries again
+from beginning for the cure.

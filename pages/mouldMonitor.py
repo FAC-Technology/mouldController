@@ -13,7 +13,9 @@ from . import defaults
 
 style.use("ggplot")
 
+
 class MouldMonitor(tk.Tk):
+    # generate the figure, possibly in the wrong place for the class
     _dpi = 100
     _px = 1200
     _py = 600
