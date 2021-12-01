@@ -36,9 +36,9 @@ class DacClass:
         self.date = dt.datetime.now().strftime(defaults.DATE_FORMAT)
         self.timeData = []  # in memory time list for plotting
         self.temperatureData = []  # in memory temperature list for plotting
-        self.logName = defaults.LOG_FOLDER + "Temperature Log {} {}.csv".format(self.date, self.name)
+        self.logName = os.path.join(defaults.LOG_FOLDER, defaults.LOG_FILE_NAMING.format(self.date, self.name))
         self.monitorPass = False
-        self._scalar = random()
+        self._scalar = 20*random()
 
         if os.path.exists(self.logName):
             self.read_log(self.logName)
@@ -50,7 +50,7 @@ class DacClass:
                 prev_day = prev_day - dt.timedelta(days=1)
                 prev_log = defaults.LOG_FILE_NAMING.format(prev_day.strftime(defaults.DATE_FORMAT),
                                                            self.name)
-                prev_log = defaults.LOG_FOLDER + prev_log
+                prev_log = os.path.join(defaults.LOG_FOLDER, prev_log)
                 if os.path.exists(prev_log):
                     defaults.log.info(msg="Reading log from {}".format(prev_log))
                     self.read_log(prev_log)
@@ -72,7 +72,7 @@ class DacClass:
                 self.temperatureData.append(float(y))
 
     def get_data(self):
-        temperature = 20 + (self._scalar * math.sin(0.5 * (dt.datetime.now().second +
+        temperature = 71 + (self._scalar * math.sin(0.2 * (dt.datetime.now().second +
                                                            dt.datetime.now().microsecond * 1e-6)))
         self.temperatureData.append(temperature)
         self.timeData.append(dt.datetime.now())
@@ -104,7 +104,7 @@ class DacClass:
     def write_log(self):
         # need to check date in case of increment
         self.date = dt.datetime.now().strftime(defaults.DATE_FORMAT)
-        self.logName = defaults.LOG_FOLDER + defaults.LOG_FILE_NAMING.format(self.date, self.name)
+        self.logName = os.path.join(defaults.LOG_FOLDER, defaults.LOG_FILE_NAMING.format(self.date, self.name))
 
         with open(self.logName, "a+") as f:
             f.write(f"{dt.datetime.strftime(self.timeData[-1], defaults.DATETIME_FORMAT)}, \

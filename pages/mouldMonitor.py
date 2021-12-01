@@ -28,16 +28,18 @@ class MouldMonitor(tk.Tk):
 
     a.set_ylabel('Temperature (C)')
     a.set_xlabel('Time (s)')
-
+    a.set_ylim(15,100)
     def __init__(self, ip_file, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.ip_check_time = dt.datetime.now()
         self.read_ips(ip_file)
-        while not self.new_ip_list:
+        if not self.new_ip_list:
             print('Add a DAC IP to IP_ADDRESSES.txt to begin')
+            print(f'Find this file in {defaults.IP_FILE}')
             defaults.log.info(msg='No IPs in list')
-            time.sleep(5)
-            self.read_ips(ip_file)
+            while not self.new_ip_list:
+                time.sleep(1)
+                self.read_ips(ip_file)
 
         for ip in self.new_ip_list:
             self.dac_list.append(DacClass(ip))
@@ -89,10 +91,11 @@ class MouldMonitor(tk.Tk):
                 dac.initialised = True
                 self.a.plot_date(dac.timeData,  # x list
                                  dac.temperatureData,  # y list
-                                 defaults.lineStyles[j],  # line style
+                                 defaults.lineStyles[j % len(defaults.lineStyles)],  # line style, loop round
                                  label=dac.name,  # label
                                  xdate=True)
         self.f.legend()
+
     def animate(self, i):
         now = dt.datetime.now()
         self.a.title.set_text(dt.datetime.strftime(now, defaults.TIME_FORMAT))
