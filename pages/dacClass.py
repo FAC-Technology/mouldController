@@ -35,8 +35,10 @@ class DacClass:
         self.temperatureData = []  # in memory temperature list for plotting
         self.logName = os.path.join(defaults.LOG_FOLDER, defaults.LOG_FILE_NAMING.format(self.date, self.name))
         self.monitorPass = False
-        self._scalar = 20*random()
-
+        self._scalar = 20 * random()
+        self._user = "admin"
+        self._pwd = "qqqqqqq/"
+        self._logMemory = 0  # used to count how many days in the past a log has been searched for
         if os.path.exists(self.logName):
             self.read_log(self.logName)
         else:
@@ -45,6 +47,7 @@ class DacClass:
             prev_day = dt.date.today()
             while not self.timeData:  # if list is empty
                 prev_day = prev_day - dt.timedelta(days=1)
+                self._logMemory += 1
                 prev_log = defaults.LOG_FILE_NAMING.format(prev_day.strftime(defaults.DATE_FORMAT),
                                                            self.name)
                 prev_log = os.path.join(defaults.LOG_FOLDER, prev_log)
@@ -54,6 +57,7 @@ class DacClass:
 
                 if dt.date.today() - prev_day > dt.timedelta(days=7):
                     print('Could not find log file in last week.')
+                    self._logMemory = 0
                     self.scrape_data()
 
         print(f'DAC {self.name} created, initialised with {len(self.temperatureData)} data points')
@@ -69,8 +73,31 @@ class DacClass:
                 self.temperatureData.append(float(y))
 
     def add_previous_log(self, msg_box):
+        self._logMemory += 1
+        prev_day = dt.date.today() - dt.timedelta(days=self._logMemory)
+        prev_day = prev_day
+        prev_log_name = defaults.LOG_FILE_NAMING.format(prev_day.strftime(defaults.DATE_FORMAT),
+                                                        self.name)
+        prev_log = os.path.join(defaults.LOG_FOLDER, prev_log_name)
 
-        pass
+        if os.path.isfile(prev_log):
+            prev_time_space = []
+            prev_temperature_space = []
+
+            self._write_to_box(msg_box, f"Found log for {prev_day.strftime(defaults.DATE_FORMAT)}")
+            with open(prev_log, "r") as f:
+                read_data = f.readlines()
+
+            for eachLine in read_data:
+                if len(eachLine) > 1:
+                    x, y = eachLine.split(',')
+                    prev_time_space.append(dt.datetime.strptime(x, defaults.DATETIME_FORMAT))
+                    prev_temperature_space.append(float(y))
+            self.timeData = prev_time_space + self.timeData
+            self.temperatureData = prev_temperature_space + self.temperatureData
+
+        else:
+            self._write_to_box(msg_box, f"Couldn't find log for {prev_day.strftime(defaults.DATE_FORMAT)}")
 
     def get_data(self):
         temperature = 71 + (self._scalar * math.sin(0.2 * (dt.datetime.now().second +
@@ -79,13 +106,13 @@ class DacClass:
         self.timeData.append(dt.datetime.now())
 
     def scrape_data(self):
+        # extracts numerical data request from nanodac on network,
         cookies = {
             'session': '(null)',
         }
 
         headers = {
             'Connection': 'close',
-            'Authorization': 'Basic =',
             'Accept': '*/*',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
                           ' Chrome/96.0.4664.45 Safari/537.36',
@@ -93,12 +120,23 @@ class DacClass:
             'Referer': f'http://{self.address}/npage.html',
             'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8,de;q=0.7',
         }
+        try:
+            response = requests.get(f'http://{self.address}/numerics',
+                                headers=headers,
+                                cookies=cookies,
+                                auth=(self._user, self._pwd),
+                                verify=False,
+                                timeout=1.5)
+            if response.status_code == 200:
+                temperature = float(re.findall('\d*\.?\d+', response.text.split(',')[7])[0])
+                self.temperatureData.append(temperature)
+                self.timeData.append(dt.datetime.now())
+        except requests.exceptions.ConnectionError:
+            defaults.log.info(msg=f"Couldn't reach {self.name}, connection error")
 
-        response = requests.get(f'http://{self.address}/numerics', headers=headers, cookies=cookies, verify=False)
-        temperature = float(re.findall('\d*\.?\d+', response.text.split(',')[7])[0])
+        except requests.exceptions.Timeout:
+            defaults.log.info(msg=f"Couldn't reach {self.name}, timeout")
 
-        self.temperatureData.append(temperature)
-        self.timeData.append(dt.datetime.now())
 
 
     def set_active(self):
@@ -129,10 +167,10 @@ class DacClass:
 
         elif isinstance(monitor_output, type(None)):
             msg = f'No cure cycle results for {self.name}\n Probably not enough time data to search'
-            self._write_to_box(msg_box,msg)
+            self._write_to_box(msg_box, msg)
 
         else:
-            self._write_to_box(msg_box,monitor_output)
+            self._write_to_box(msg_box, monitor_output)
 
     def export_data(self, msg_box):
         # method gets the cure results, and writes a graph to a file in mould temp exports as a .png
@@ -153,8 +191,10 @@ class DacClass:
         a.set_xlabel('Time (s)')
         a.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
         cure_results = self.cure_cycle_check_corner_method()
+
         # cure results is a list:
         # [cureSuccess?,[times],postcureSuccess?,[PCtimes]]
+
         def nearest(items, pivot):
             return min(items, key=lambda x: abs(x - pivot))
 
@@ -165,23 +205,25 @@ class DacClass:
             end_index = self.timeData.index(nearest(self.timeData, end_graph_time))
             x_data = self.timeData[start_index:end_index]
             y_data = self.temperatureData[start_index:end_index]
-            a.title.set_text(f'Cure Results for {self.name} between {dt.datetime.strftime(start_graph_time, defaults.TIME_FORMAT)} and '
-                             f'{dt.datetime.strftime(end_graph_time, defaults.TIME_FORMAT)}')
+            a.title.set_text(
+                f'Cure Results for {self.name} between {dt.datetime.strftime(start_graph_time, defaults.TIME_FORMAT)} and '
+                f'{dt.datetime.strftime(end_graph_time, defaults.TIME_FORMAT)}')
             rect_postcure = patches.Rectangle(
                 (mdates.date2num(cure_results[3][0]),
                  ccq.Fmin),
-                ccq.D_C/(24*3600),  # width
+                ccq.D_C / (24 * 3600),  # width
                 ccq.Fmax - ccq.Fmin,  # height
                 color='r',
                 alpha=0.2
-                )
+            )
             rect_cure = patches.Rectangle((mdates.date2num(cure_results[1][0]),
-                                      ccq.Emin),
-                                     ccq.B_A/(24*3600), # mdates.date2num(dt.timedelta(seconds=ccq.B_A)), # width
-                                     ccq.Emax-ccq.Emin, # height
-                                     color='g',
-                                     alpha=0.2
-                                     )
+                                           ccq.Emin),
+                                          ccq.B_A / (24 * 3600),
+                                          # mdates.date2num(dt.timedelta(seconds=ccq.B_A)), # width
+                                          ccq.Emax - ccq.Emin,  # height
+                                          color='g',
+                                          alpha=0.2
+                                          )
             a.add_patch(rect_postcure)
             a.add_patch(rect_cure)
 
@@ -197,20 +239,20 @@ class DacClass:
                     xdate=True)
         details_text = self._assemble_check_string(cure_results)
         left_limit = x_data[0] - dt.timedelta(minutes=1)
-        right_limit = x_data[-1]  + dt.timedelta(minutes=1)
+        right_limit = x_data[-1] + dt.timedelta(minutes=1)
 
         a.set_xlim(left_limit,
-                        right_limit)
+                   right_limit)
 
         out_graph_name = os.path.join(defaults.EXPORT_PATH,
-                               defaults.GRAPH_EXPORT_NAME.format(self.name,
-                                                                 now.strftime(defaults.FNAME_TIME_FORMAT)))
+                                      defaults.GRAPH_EXPORT_NAME.format(self.name,
+                                                                        now.strftime(defaults.FNAME_TIME_FORMAT)))
         f.savefig(out_graph_name)
 
         out_file = PDF(title=self.name,
                        logo=defaults.LOGO_FILE)
         out_file.add_page()
-        out_file.insert_graph(graph_loc=out_graph_name+'.png')
+        out_file.insert_graph(graph_loc=out_graph_name + '.png')
         out_file.output(out_graph_name + '.pdf')
         self._write_to_box(msg_box, f'Output PDF to {out_graph_name}')
 
@@ -223,7 +265,7 @@ class DacClass:
 
         # algorithm is not that easy to understand but I think it's sound.
         # See the readme for a longer explanation.
-        average_window = 2/60  # sample every two minutes
+        average_window = 2 / 60  # sample every two minutes
         post_cured = False
         post_cure_entered = False
         post_cure_times = []  # an even numbered list of entry / exit times to the post_cure window
@@ -255,9 +297,9 @@ class DacClass:
                 if (post_cure_times[-1] - post_cure_times[0]).total_seconds() > ccq.D_C:
                     post_cured = True
             elif len(post_cure_times) % 2 == 0 and post_cure_times and \
-                (post_cure_times[-1] - post_cure_times[0]).total_seconds() > 1.05 * ccq.D_C:
-                    post_cured = False
-                    break
+                    (post_cure_times[-1] - post_cure_times[0]).total_seconds() > 1.05 * ccq.D_C:
+                post_cured = False
+                break
         if len(post_cure_times) % 2 == 0 and post_cure_times and not post_cured:
             i = len(df)
 
@@ -278,7 +320,7 @@ class DacClass:
                 cured = True
             elif len(cure_window_times) % 2 == 0 and cure_window_times and \
                     (cure_window_times[-1] - cure_window_times[0]).total_seconds() > ccq.B_A:
-                    break
+                break
         return [cured, cure_window_times, post_cured, post_cure_times]
 
     @staticmethod

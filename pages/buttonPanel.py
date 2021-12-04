@@ -19,7 +19,7 @@ class ButtonPanel(tk.Frame):
             )
         self.msg_box.insert('end', 'Info')
         self.msg_box.config(state='disabled')
-        self.msg_box.grid(row=0, columnspan=2)
+        self.msg_box.grid(row=0, columnspan=3)
 
     def create_row(self, parent, dac):
         self.button_rows.append({})
@@ -32,6 +32,7 @@ class ButtonPanel(tk.Frame):
         self.button_rows[-1]['addData'] = tk.Button(master=parent,
                                                     text=f'Add data to {dac.name}',
                                                     command=lambda: dac.add_previous_log(self.msg_box))
+
         parent.grid_rowconfigure(len(self.button_rows), weight=1)
         parent.grid_columnconfigure(3, weight=1)
         for i, b in enumerate(self.button_rows[-1].items()):
