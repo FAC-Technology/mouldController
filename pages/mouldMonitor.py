@@ -111,7 +111,6 @@ class MouldMonitor(tk.Tk):
                 dac.write_log()
                 self.a.lines[j].set_xdata(dac.timeData)
                 self.a.lines[j].set_ydata(dac.temperatureData)
-
         left_limit = min([dac.timeData[0] for dac in self.dac_list])
         right_limit = max([dac.timeData[-1] for dac in self.dac_list])
 
