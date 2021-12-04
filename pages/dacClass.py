@@ -1,11 +1,8 @@
 import datetime as dt
 import math
 import os
-
-# import requests
-# import urllib
-# from lxml import html
-# from bs4 import BeautifulSoup as bsoup
+import re
+import requests
 
 from matplotlib import style
 from matplotlib.figure import Figure
@@ -57,7 +54,7 @@ class DacClass:
 
                 if dt.date.today() - prev_day > dt.timedelta(days=7):
                     print('Could not find log file in last week.')
-                    self.get_data()
+                    self.scrape_data()
 
         print(f'DAC {self.name} created, initialised with {len(self.temperatureData)} data points')
 
@@ -71,23 +68,38 @@ class DacClass:
                 self.timeData.append(dt.datetime.strptime(x, defaults.DATETIME_FORMAT))
                 self.temperatureData.append(float(y))
 
+    def add_previous_log(self, msg_box):
+
+        pass
+
     def get_data(self):
         temperature = 71 + (self._scalar * math.sin(0.2 * (dt.datetime.now().second +
                                                            dt.datetime.now().microsecond * 1e-6)))
         self.temperatureData.append(temperature)
         self.timeData.append(dt.datetime.now())
 
-    #
-    # def scrape_data(self):
-    #     url = 'http://time-time.net/timer/digital-clock.php'
-    #     sr = requests.session()
-    #     page = sr.get(url)
-    #     result = html.fromstring(page.content)
-    #     time = result.xpath("/html/body/div[2]/div/div[3]/div/div[2]/div[1]")
-    #
-    #     soup = bsoup(page.content,"html.parser")
-    #     # time = soup.find("container", {"class": "timenow"}).get_text(strip=True)
-    #     print(time.text)
+    def scrape_data(self):
+        cookies = {
+            'session': '(null)',
+        }
+
+        headers = {
+            'Connection': 'close',
+            'Authorization': 'Basic =',
+            'Accept': '*/*',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
+                          ' Chrome/96.0.4664.45 Safari/537.36',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Referer': f'http://{self.address}/npage.html',
+            'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8,de;q=0.7',
+        }
+
+        response = requests.get(f'http://{self.address}/numerics', headers=headers, cookies=cookies, verify=False)
+        temperature = float(re.findall('\d*\.?\d+', response.text.split(',')[7])[0])
+
+        self.temperatureData.append(temperature)
+        self.timeData.append(dt.datetime.now())
+
 
     def set_active(self):
         # mark DAC as active, and data should be collected and updated

@@ -106,7 +106,8 @@ class MouldMonitor(tk.Tk):
             # dac.scrape_data()
             # print('finished')
             if dac.active and dac.initialised:
-                dac.get_data()
+                # dac.get_data()
+                dac.scrape_data()
                 dac.write_log()
                 self.a.lines[j].set_xdata(dac.timeData)
                 self.a.lines[j].set_ydata(dac.temperatureData)

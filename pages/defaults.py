@@ -2,12 +2,17 @@ import logging
 from logging import handlers
 import os
 
-LOG_FOLDER = "mould logs"
+
 EXPORT_FOLDER = 'Mould Temperature Exports'
 LOGO_FILE = "FACT_LOGO.png"
 GRAPH_EXPORT_NAME = "TemperatureReport_{}-{}"
-EXPORT_PATH = os.path.expanduser(os.path.join('~', 'Documents', EXPORT_FOLDER))
-IP_FILE = os.path.expanduser(os.path.join('~','Desktop',"IP_ADDRESSES.txt"))
+DESKTOP_FOLDER = "Mould Monitor"
+DESKTOP_PATH = os.path.expanduser(os.path.join('~', 'Desktop', DESKTOP_FOLDER))
+LOG_FOLDER = "Data Logs"
+IP_FILENAME = "IP_ADDRESSES.txt"
+EXPORT_PATH = os.path.join(DESKTOP_PATH, EXPORT_FOLDER)
+IP_FILE = os.path.join(DESKTOP_PATH, IP_FILENAME)
+LOG_FOLDER = os.path.join(DESKTOP_PATH, LOG_FOLDER)
 IP_CHECK_PERIOD = 0.05  # minutes
 DATE_FORMAT = "%d-%m-%y"
 TIME_FORMAT = "%H:%M:%S"
@@ -20,12 +25,15 @@ LOG_FILE_NAMING = "Temperature Log {} {}.csv"
 
 # check prerequisite files exist.
 # exists in /Documents/Mould Temperature Exports
+if not os.path.isdir(DESKTOP_PATH):
+    os.mkdir(DESKTOP_PATH)
+
 if not os.path.isdir(EXPORT_PATH):
     os.mkdir(EXPORT_PATH)
 
 if not os.path.isdir(LOG_FOLDER):
     os.mkdir(LOG_FOLDER)
-    with open(os.path.join(LOG_FOLDER, "main.log"),'w+'):
+    with open(os.path.join(LOG_FOLDER, "main.log"), 'w+'):
         pass
 
 if not os.path.isfile(IP_FILE):
@@ -43,8 +51,3 @@ handler = logging.handlers.WatchedFileHandler(
 handler.setFormatter(logging.Formatter(format_str))
 log.addHandler(handler)
 log.setLevel(os.environ.get("LOGLEVEL", "INFO"))
-
-LOREM = """Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et 
-dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo 
-consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. 
-Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. """

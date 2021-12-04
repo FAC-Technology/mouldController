@@ -9,7 +9,7 @@ class ButtonPanel(tk.Frame):
         # label = tk.title(self, text="Heater Management", font=defaults.LARGE_FONT)
         self.button_rows = []
         self.grid_rowconfigure(1, weight=1)
-        self.grid_columnconfigure(2, weight=1)
+        self.grid_columnconfigure(3, weight=1)
         self.msg_box = tk.Text(
                 self,
                 height=14,
@@ -29,9 +29,11 @@ class ButtonPanel(tk.Frame):
         self.button_rows[-1]['export'] = tk.Button(master=parent,
                                                    text=f'Export {dac.name}',
                                                    command=lambda: dac.export_data(self.msg_box))
-
+        self.button_rows[-1]['addData'] = tk.Button(master=parent,
+                                                    text=f'Add data to {dac.name}',
+                                                    command=lambda: dac.add_previous_log(self.msg_box))
         parent.grid_rowconfigure(len(self.button_rows), weight=1)
-        parent.grid_columnconfigure(2, weight=1)
+        parent.grid_columnconfigure(3, weight=1)
         for i, b in enumerate(self.button_rows[-1].items()):
             b[1].grid(row=len(self.button_rows), column=i)
 
