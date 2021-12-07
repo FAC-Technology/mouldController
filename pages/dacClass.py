@@ -3,6 +3,7 @@ import math
 import os
 import re
 import requests
+import numpy as np
 
 from matplotlib import style
 from matplotlib.figure import Figure
@@ -39,6 +40,7 @@ class DacClass:
         self._user = "admin"
         self._pwd = "qqqqqqq/"
         self._logMemory = 0  # used to count how many days in the past a log has been searched for
+        self.connected = False
         if os.path.exists(self.logName):
             self.read_log(self.logName)
         else:
@@ -110,7 +112,6 @@ class DacClass:
         cookies = {
             'session': '(null)',
         }
-
         headers = {
             'Connection': 'close',
             'Accept': '*/*',
@@ -122,22 +123,30 @@ class DacClass:
         }
         try:
             response = requests.get(f'http://{self.address}/numerics',
-                                headers=headers,
-                                cookies=cookies,
-                                auth=(self._user, self._pwd),
-                                verify=False,
-                                timeout=1.5)
+                                    headers=headers,
+                                    cookies=cookies,
+                                    auth=(self._user, self._pwd),
+                                    verify=False,
+                                    timeout=0.5)
+
             if response.status_code == 200:
-                temperature = float(re.findall('\d*\.?\d+', response.text.split(',')[7])[0])
-                self.temperatureData.append(temperature)
-                self.timeData.append(dt.datetime.now())
+                print(response.text)
+                temp_string = re.findall('\d*\.?\d+', response.text.split(',')[7])[0]
+                try:
+                    temperature = float(temp_string)
+                    self.temperatureData.append(temperature)
+                    self.timeData.append(dt.datetime.now())
+                    self.connected = True
+                except ValueError:
+                    self.connected = False
+
         except requests.exceptions.ConnectionError:
             defaults.log.info(msg=f"Couldn't reach {self.name}, connection error")
+            self.connected = False
 
         except requests.exceptions.Timeout:
             defaults.log.info(msg=f"Couldn't reach {self.name}, timeout")
-
-
+            self.connected = False
 
     def set_active(self):
         # mark DAC as active, and data should be collected and updated
@@ -155,10 +164,10 @@ class DacClass:
         # need to check date in case of increment
         self.date = dt.datetime.now().strftime(defaults.DATE_FORMAT)
         self.logName = os.path.join(defaults.LOG_FOLDER, defaults.LOG_FILE_NAMING.format(self.date, self.name))
-
-        with open(self.logName, "a+") as f:
-            f.write(f"{dt.datetime.strftime(self.timeData[-1], defaults.DATETIME_FORMAT)}, \
-                        {self.temperatureData[-1]}\n")
+        if self.temperatureData:
+            with open(self.logName, "a+") as f:
+                f.write(f"{dt.datetime.strftime(self.timeData[-1], defaults.DATETIME_FORMAT)}, \
+                            {self.temperatureData[-1]}\n")
 
     def check_data(self, msg_box):
         monitor_output = self._assemble_check_string(self.cure_cycle_check_corner_method())
@@ -231,7 +240,9 @@ class DacClass:
             x_data = self.timeData
             y_data = self.temperatureData
             a.title.set_text(f'Time history for {self.name}, no cure cycle was detected')
-
+        avg_window = 10
+        y_data = np.convolve(y_data, np.ones(avg_window)/avg_window, mode="valid")
+        x_data = x_data[:-avg_window+1]
         a.plot_date(x_data,
                     y_data,
                     'k-',
@@ -253,6 +264,7 @@ class DacClass:
                        logo=defaults.LOGO_FILE)
         out_file.add_page()
         out_file.insert_graph(graph_loc=out_graph_name + '.png')
+        out_file.insert_text(details_text)
         out_file.output(out_graph_name + '.pdf')
         self._write_to_box(msg_box, f'Output PDF to {out_graph_name}')
 
@@ -265,7 +277,6 @@ class DacClass:
 
         # algorithm is not that easy to understand but I think it's sound.
         # See the readme for a longer explanation.
-        average_window = 2 / 60  # sample every two minutes
         post_cured = False
         post_cure_entered = False
         post_cure_times = []  # an even numbered list of entry / exit times to the post_cure window
@@ -277,7 +288,7 @@ class DacClass:
 
         df = pd.DataFrame({'Datetime': self.timeData, 'temperature': self.temperatureData})
         df['Datetime'] = pd.to_datetime(df['Datetime'], format=defaults.DATETIME_FORMAT)
-        df = df.set_index(pd.DatetimeIndex(df['Datetime'])).resample(f'{average_window}H').ffill()
+        df = df.set_index(pd.DatetimeIndex(df['Datetime'])).ffill()
 
         i = len(df)
 

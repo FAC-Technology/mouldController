@@ -31,6 +31,7 @@ class MouldMonitor(tk.Tk):
     a.set_ylabel('Temperature (C)')
     a.set_xlabel('Time (s)')
     a.set_ylim(15,100)
+
     def __init__(self, ip_file, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.ip_check_time = dt.datetime.now()
@@ -42,10 +43,15 @@ class MouldMonitor(tk.Tk):
             while not self.new_ip_list:
                 time.sleep(1)
                 self.read_ips(ip_file)
-
         for ip in self.new_ip_list:
             self.dac_list.append(DacClass(ip))
 
+        print('Searching for visible dacs')
+        dacs_reachable = [False]
+        while not any(dacs_reachable):
+            dacs_reachable = [dac.connected for dac in self.dac_list]
+            time.sleep(1)
+        print('Found at least one dac on the network')
         self.running = True
         tk.Tk.wm_title(self, "Mould Temperature Manager")
 
@@ -148,3 +154,19 @@ class MouldMonitor(tk.Tk):
                 self.button_list[-1]['name'] = self.dac_list[-1].name
                 self.button_list[-1]['buttons'] = self.button_frame.create_row(self.button_frame, self.dac_list[-1])
                 self.f.legend().remove()
+
+    def list_unreachables(self,msg_box):
+        disconnected_list = "Could not connect to:\n"
+        for dac in self.dac_list:
+            if not dac.connected:
+                disconnected_list += dac.name
+        disconnected_list += "!"
+        self._write_to_box(msg_box,disconnected_list)
+    @staticmethod
+    def _write_to_box(msg_box, text):
+        msg_box.config(state='normal')
+        msg_box.delete(1.0, 'end')  # delete lines 1, 2, 3, 4
+        msg_box.insert(1.0, f'{text}')
+        msg_box.insert(1.0, 'Info\n')
+        msg_box.update()
+        msg_box.config(state='disabled')
