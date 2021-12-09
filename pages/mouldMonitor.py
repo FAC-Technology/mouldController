@@ -46,10 +46,15 @@ class MouldMonitor(tk.Tk):
         for ip in self.new_ip_list:
             self.dac_list.append(DacClass(ip))
 
-        print('Searching for visible dacs')
+        print('Proceeding when any DAC connects')
+        print('Consider checking the IP list is correct')
         dacs_reachable = [False]
         while not any(dacs_reachable):
             dacs_reachable = [dac.connected for dac in self.dac_list]
+            if not any(dacs_reachable):
+                for dac in self.dac_list:
+                    dac.scrape_data()
+                self.update_ip_list()
             time.sleep(1)
         print('Found at least one dac on the network')
         self.running = True
@@ -97,8 +102,8 @@ class MouldMonitor(tk.Tk):
         for j, dac in enumerate(self.dac_list):
             if not dac.initialised:
                 dac.initialised = True
-                self.a.plot_date(dac.timeData,  # x list
-                                 dac.temperatureData,  # y list
+                self.a.plot_date(defaults.downsample_to_max(dac.timeData, 1440),  # x list
+                                 defaults.downsample_to_max(dac.temperatureData, 1440),  # y list
                                  defaults.lineStyles[j % len(defaults.lineStyles)],  # line style, loop round
                                  label=dac.name,  # label
                                  xdate=True)
@@ -115,8 +120,9 @@ class MouldMonitor(tk.Tk):
                 # dac.get_data()
                 dac.scrape_data()
                 dac.write_log()
-                self.a.lines[j].set_xdata(dac.timeData)
-                self.a.lines[j].set_ydata(dac.temperatureData)
+
+                self.a.lines[j].set_xdata(defaults.downsample_to_max(dac.timeData, 1440))
+                self.a.lines[j].set_ydata(defaults.downsample_to_max(dac.temperatureData, 1440))
         left_limit = min([dac.timeData[0] for dac in self.dac_list])
         right_limit = max([dac.timeData[-1] for dac in self.dac_list])
 
@@ -161,7 +167,10 @@ class MouldMonitor(tk.Tk):
             if not dac.connected:
                 disconnected_list += dac.name
         disconnected_list += "!"
-        self._write_to_box(msg_box,disconnected_list)
+        if any([not dac.connected for dac in self.dac_list]): # only display if any disconnects found
+            self._write_to_box(msg_box, disconnected_list)
+        else:
+            self._write_to_box(msg_box, "Connected to all dacs")
     @staticmethod
     def _write_to_box(msg_box, text):
         msg_box.config(state='normal')

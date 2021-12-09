@@ -240,7 +240,7 @@ class DacClass:
             x_data = self.timeData
             y_data = self.temperatureData
             a.title.set_text(f'Time history for {self.name}, no cure cycle was detected')
-        avg_window = 10
+        avg_window = 5
         y_data = np.convolve(y_data, np.ones(avg_window)/avg_window, mode="valid")
         x_data = x_data[:-avg_window+1]
         a.plot_date(x_data,
@@ -264,7 +264,8 @@ class DacClass:
                        logo=defaults.LOGO_FILE)
         out_file.add_page()
         out_file.insert_graph(graph_loc=out_graph_name + '.png')
-        out_file.insert_text(details_text)
+        if not details_text is None:
+            out_file.insert_text(details_text)
         out_file.output(out_graph_name + '.pdf')
         self._write_to_box(msg_box, f'Output PDF to {out_graph_name}')
 
@@ -288,7 +289,7 @@ class DacClass:
 
         df = pd.DataFrame({'Datetime': self.timeData, 'temperature': self.temperatureData})
         df['Datetime'] = pd.to_datetime(df['Datetime'], format=defaults.DATETIME_FORMAT)
-        df = df.set_index(pd.DatetimeIndex(df['Datetime'])).ffill()
+        df = df.set_index(pd.DatetimeIndex(df['Datetime'])).bfill()
 
         i = len(df)
 

@@ -31,7 +31,7 @@ if not os.path.isdir(DESKTOP_PATH):  # check destination folder
 if not os.path.isdir(EXPORT_PATH):  # check export folder
     os.mkdir(EXPORT_PATH)
 
-if not os.path.isdir(LOG_FOLDER):  # check folder for longs
+if not os.path.isdir(LOG_FOLDER):  # check folder for logs
     os.mkdir(LOG_FOLDER)
     with open(os.path.join(LOG_FOLDER, "main.log"), 'w+'):  # touch main log file
         pass
@@ -51,3 +51,25 @@ handler = logging.handlers.WatchedFileHandler(
 handler.setFormatter(logging.Formatter(format_str))
 log.addHandler(handler)
 log.setLevel(os.environ.get("LOGLEVEL", "INFO"))
+
+
+# downsize arrays to manageable plot sizes
+
+def downsample_to_proportion(rows, proportion):
+    counter = 0.0
+    last_counter = None
+    results = []
+
+    for row in rows:
+
+        counter += proportion
+
+        if int(counter) != last_counter:
+            results.append(row)
+            last_counter = int(counter)
+
+    return results
+
+
+def downsample_to_max(rows, max_rows):
+    return downsample_to_proportion(rows, max_rows / float(len(rows)))
