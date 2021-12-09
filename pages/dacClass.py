@@ -136,13 +136,13 @@ class DacClass:
                 temp_string = re.findall('\d*\.?\d+', response.text.split(',')[7])[0]
                 try:
                     temperature = float(temp_string)
+                    self.connected = True
                     self.temperatureData.append(temperature)
                     self.timeData.append(dt.datetime.now())
                     all_temps = [re.findall('\d*\.?\d+', response.text.split(',')[indx])[0] for indx in temp_positions]
                     with open(self.fullLogName, "a+") as f:
                         f.write(f"{dt.datetime.strftime(self.timeData[-1], defaults.DATETIME_FORMAT)}, \
                                     {all_temps}\n")
-
                 except ValueError:
                     self.connected = False
 
