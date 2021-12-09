@@ -35,6 +35,7 @@ class DacClass:
         self.timeData = []  # in memory time list for plotting
         self.temperatureData = []  # in memory temperature list for plotting
         self.logName = os.path.join(defaults.LOG_FOLDER, defaults.LOG_FILE_NAMING.format(self.date, self.name))
+        self.fullLogName = os.path.join(defaults.LOG_FOLDER, "full_" + defaults.LOG_FILE_NAMING.format(self.date, self.name))
         self.monitorPass = False
         self._scalar = 20 * random()
         self._user = "admin"
@@ -130,13 +131,18 @@ class DacClass:
                                     timeout=0.5)
 
             if response.status_code == 200:
+                temp_positions = [7, 10, 13, 16]
                 print(response.text)
                 temp_string = re.findall('\d*\.?\d+', response.text.split(',')[7])[0]
                 try:
                     temperature = float(temp_string)
                     self.temperatureData.append(temperature)
                     self.timeData.append(dt.datetime.now())
-                    self.connected = True
+                    all_temps = [re.findall('\d*\.?\d+', response.text.split(',')[indx])[0] for indx in temp_positions]
+                    with open(self.fullLogName, "a+") as f:
+                        f.write(f"{dt.datetime.strftime(self.timeData[-1], defaults.DATETIME_FORMAT)}, \
+                                    {all_temps}\n")
+
                 except ValueError:
                     self.connected = False
 

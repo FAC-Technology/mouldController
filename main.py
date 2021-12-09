@@ -11,7 +11,7 @@ matplotlib.use("TkAgg")
 # initialise the class object holding the window.
 app = MouldMonitor(ip_file=defaults.IP_FILE)
 # every 1000ms, update the graph using the animate method
-ani = animation.FuncAnimation(app.f, app.animate, interval=3000)
+ani = animation.FuncAnimation(app.f, app.animate, interval=1000)
 app.initialise_plots()  # initialise the plots with the existing data.
 defaults.log.info('Starting running')
 

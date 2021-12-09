@@ -55,8 +55,9 @@ class MouldMonitor(tk.Tk):
             if not any(dacs_reachable):
                 for dac in self.dac_list:
                     dac.scrape_data()
+                    time.sleep(1)
+
                 self.update_ip_list()
-            time.sleep(1)
         print('Found at least one dac on the network')
         self.running = True
         tk.Tk.wm_title(self, "Mould Temperature Manager")
