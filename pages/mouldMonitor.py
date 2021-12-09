@@ -23,6 +23,7 @@ class MouldMonitor(tk.Tk):
                         _py / _dpi),
                dpi=_dpi)
     a = f.add_subplot(111)
+    dac_plot_points = 1200
 
     dac_list = []
     old_ip_list = []
@@ -102,8 +103,8 @@ class MouldMonitor(tk.Tk):
         for j, dac in enumerate(self.dac_list):
             if not dac.initialised:
                 dac.initialised = True
-                self.a.plot_date(defaults.downsample_to_max(dac.timeData, 1440),  # x list
-                                 defaults.downsample_to_max(dac.temperatureData, 1440),  # y list
+                self.a.plot_date(defaults.downsample_to_max(dac.timeData, self.dac_plot_points),  # x list
+                                 defaults.downsample_to_max(dac.temperatureData, self.dac_plot_points),  # y list
                                  defaults.lineStyles[j % len(defaults.lineStyles)],  # line style, loop round
                                  label=dac.name,  # label
                                  xdate=True)
@@ -113,16 +114,12 @@ class MouldMonitor(tk.Tk):
         now = dt.datetime.now()
         self.a.title.set_text(dt.datetime.strftime(now, defaults.TIME_FORMAT))
         for j, dac in enumerate(self.dac_list):
-            # print('scraping')
-            # dac.scrape_data()
-            # print('finished')
             if dac.active and dac.initialised:
-                # dac.get_data()
                 dac.scrape_data()
                 dac.write_log()
 
-                self.a.lines[j].set_xdata(defaults.downsample_to_max(dac.timeData, 1440))
-                self.a.lines[j].set_ydata(defaults.downsample_to_max(dac.temperatureData, 1440))
+                self.a.lines[j].set_xdata(defaults.downsample_to_max(dac.timeData, self.dac_plot_points))
+                self.a.lines[j].set_ydata(defaults.downsample_to_max(dac.temperatureData, self.dac_plot_points))
         left_limit = min([dac.timeData[0] for dac in self.dac_list])
         right_limit = max([dac.timeData[-1] for dac in self.dac_list])
 
