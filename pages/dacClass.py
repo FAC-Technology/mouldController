@@ -9,12 +9,12 @@ import matplotlib.dates as mdates
 import matplotlib.patches as patches
 import numpy as np
 import pandas as pd
+import requests
 from matplotlib import style
 from matplotlib.figure import Figure
 
 from . import cureCycleReqs as ccq
 from . import defaults
-from .outputPDF import PDF
 
 style.use("ggplot")
 
@@ -127,27 +127,21 @@ class DacClass:
             'Referer': f'http://{self.address}/npage.html',
             'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8,de;q=0.7',
         }
-        # try:
-        #     response = requests.get(f'http://{self.address}/numerics',
-        #                             headers=headers,
-        #                             cookies=cookies,
-        #                             auth=(self._user, self._pwd),
-        #                             verify=False,
-        #                             timeout=0.1)
-        # except:
-        #     self.connected = False
-        #     defaults.log.info(msg=f"Couldn't reach {self.name}, connection error")
-        #     del response
-        if datetime.datetime.now().microsecond < 2e5:
-            response_text = f"a,a,a,a,a,a,a,{23+max(0,25*math.sin(dt.datetime.now().second / 6))},a,a,30,a,a,35,b,b,27"
-            response_status_code = 200
-        else:
-            response_text = f"a,a,a,a,a,a,a,{23+max(0,25*math.sin(dt.datetime.now().second / 6))},a,a,b,range,a,a,35,b,b,27"
-            response_status_code = 200
-        if response_status_code == 200:
+        try:
+            response = requests.get(f'http://{self.address}/numerics',
+                                    headers=headers,
+                                    cookies=cookies,
+                                    auth=(self._user, self._pwd),
+                                    verify=False,
+                                    timeout=0.1)
+        except:
+            self.connected = False
+            defaults.log.info(msg=f"Couldn't reach {self.name}, connection error")
+
+        if response.status_code == 200:
             temp_positions = [7, 10, 13, 16]  # positions in the string of temperature values
-            print(response_text)
-            temp_string = re.findall('\d*\.?\d+', response_text.split(',')[7])[0]
+            print(response.text)
+            temp_string = re.findall('\d*\.?\d+', response.text.split(',')[7])[0]
             try:
                 temperature = float(temp_string)
                 self.connected = True
@@ -156,7 +150,7 @@ class DacClass:
                 all_temps = []
                 for indx in temp_positions:
                     try:
-                        all_temps.append(re.findall('\d*\.?\d+', response_text.split(',')[indx])[0])
+                        all_temps.append(re.findall('\d*\.?\d+', response.text.split(',')[indx])[0])
                     except IndexError:
                         all_temps.append('NaN')
                 with open(self.fullLogName, "a+") as f:
@@ -283,15 +277,7 @@ class DacClass:
                                       defaults.GRAPH_EXPORT_NAME.format(self.name,
                                                                         now.strftime(defaults.FNAME_TIME_FORMAT)))
         f.savefig(out_graph_name)
-
-        out_file = PDF(title=self.name,
-                       logo=defaults.LOGO_FILE)
-        out_file.add_page()
-        out_file.insert_graph(graph_loc=out_graph_name + '.png')
-        if not details_text is None:
-            out_file.insert_text(details_text)
-        out_file.output(out_graph_name + '.pdf')
-        self._write_to_box(msg_box, f'Output PDF to {out_graph_name}')
+        self._write_to_box(msg_box, f'Output PNG to {out_graph_name}')
 
     def cure_cycle_check_corner_method(self):
         # go back in time and find each corner,
