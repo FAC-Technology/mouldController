@@ -1,17 +1,17 @@
+import datetime
 import datetime as dt
 import math
 import os
 import re
-import requests
-import numpy as np
+from random import random
 
+import matplotlib.dates as mdates
+import matplotlib.patches as patches
+import numpy as np
+import pandas as pd
 from matplotlib import style
 from matplotlib.figure import Figure
-import matplotlib.patches as patches
-import matplotlib.dates as mdates
 
-import pandas as pd
-from random import random
 from . import cureCycleReqs as ccq
 from . import defaults
 from .outputPDF import PDF
@@ -35,33 +35,36 @@ class DacClass:
         self.timeData = []  # in memory time list for plotting
         self.temperatureData = []  # in memory temperature list for plotting
         self.logName = os.path.join(defaults.LOG_FOLDER, defaults.LOG_FILE_NAMING.format(self.date, self.name))
-        self.fullLogName = os.path.join(defaults.LOG_FOLDER, "full_" + defaults.LOG_FILE_NAMING.format(self.date, self.name))
+        self.fullLogName = os.path.join(defaults.LOG_FOLDER, defaults.FULL_LOG_FILE_NAMING.format(self.date, self.name))
         self.monitorPass = False
         self._scalar = 20 * random()
         self._user = "admin"
         self._pwd = "qqqqqqq/"
         self._logMemory = 0  # used to count how many days in the past a log has been searched for
         self.connected = False
+        self.currentPlot = True
+
         if os.path.exists(self.logName):
             self.read_log(self.logName)
         else:
             with open(self.logName, 'w+'):
                 pass
-            prev_day = dt.date.today()
-            while not self.timeData:  # if list is empty
-                prev_day = prev_day - dt.timedelta(days=1)
-                self._logMemory += 1
-                prev_log = defaults.LOG_FILE_NAMING.format(prev_day.strftime(defaults.DATE_FORMAT),
-                                                           self.name)
-                prev_log = os.path.join(defaults.LOG_FOLDER, prev_log)
-                if os.path.exists(prev_log):
-                    defaults.log.info(msg="Reading log from {}".format(prev_log))
-                    self.read_log(prev_log)
-
-                if dt.date.today() - prev_day > dt.timedelta(days=7):
-                    print('Could not find log file in last week.')
-                    self._logMemory = 0
-                    self.scrape_data()
+            self.scrape_data()
+            # prev_day = dt.date.today()
+            # while not self.timeData:  # if list is empty
+            #     prev_day = prev_day - dt.timedelta(days=1)
+            #     self._logMemory += 1
+            #     prev_log = defaults.LOG_FILE_NAMING.format(prev_day.strftime(defaults.DATE_FORMAT),
+            #                                                self.name)
+            #     prev_log = os.path.join(defaults.LOG_FOLDER, prev_log)
+            #     if os.path.exists(prev_log):
+            #         defaults.log.info(msg="Reading log from {}".format(prev_log))
+            #         self.read_log(prev_log)
+            #
+            #     if dt.date.today() - prev_day > dt.timedelta(days=7):
+            #         print('Could not find log file in last week.')
+            #         self._logMemory = 0
+            #         self.scrape_data()
 
         print(f'DAC {self.name} created, initialised with {len(self.temperatureData)} data points')
 
@@ -103,10 +106,12 @@ class DacClass:
             self._write_to_box(msg_box, f"Couldn't find log for {prev_day.strftime(defaults.DATE_FORMAT)}")
 
     def get_data(self):
-        temperature = 71 + (self._scalar * math.sin(0.2 * (dt.datetime.now().second +
-                                                           dt.datetime.now().microsecond * 1e-6)))
-        self.temperatureData.append(temperature)
-        self.timeData.append(dt.datetime.now())
+        if dt.datetime.now().microsecond > 5e5:
+            temperature = 71 + (self._scalar * math.sin(0.2 * (dt.datetime.now().second +
+                                                               dt.datetime.now().microsecond * 1e-6)))
+            self.currentPlot = False
+            self.temperatureData.append(temperature)
+            self.timeData.append(dt.datetime.now())
 
     def scrape_data(self):
         # extracts numerical data request from nanodac on network,
@@ -122,37 +127,49 @@ class DacClass:
             'Referer': f'http://{self.address}/npage.html',
             'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8,de;q=0.7',
         }
-        try:
-            response = requests.get(f'http://{self.address}/numerics',
-                                    headers=headers,
-                                    cookies=cookies,
-                                    auth=(self._user, self._pwd),
-                                    verify=False,
-                                    timeout=0.5)
+        # try:
+        #     response = requests.get(f'http://{self.address}/numerics',
+        #                             headers=headers,
+        #                             cookies=cookies,
+        #                             auth=(self._user, self._pwd),
+        #                             verify=False,
+        #                             timeout=0.1)
+        # except:
+        #     self.connected = False
+        #     defaults.log.info(msg=f"Couldn't reach {self.name}, connection error")
+        #     del response
+        if datetime.datetime.now().microsecond < 2e5:
+            response_text = f"a,a,a,a,a,a,a,{23+max(0,25*math.sin(dt.datetime.now().second / 6))},a,a,30,a,a,35,b,b,27"
+            response_status_code = 200
+        else:
+            response_text = f"a,a,a,a,a,a,a,{23+max(0,25*math.sin(dt.datetime.now().second / 6))},a,a,b,range,a,a,35,b,b,27"
+            response_status_code = 200
+        if response_status_code == 200:
+            temp_positions = [7, 10, 13, 16]  # positions in the string of temperature values
+            print(response_text)
+            temp_string = re.findall('\d*\.?\d+', response_text.split(',')[7])[0]
+            try:
+                temperature = float(temp_string)
+                self.connected = True
+                self.temperatureData.append(temperature)
+                self.timeData.append(dt.datetime.now())
+                all_temps = []
+                for indx in temp_positions:
+                    try:
+                        all_temps.append(re.findall('\d*\.?\d+', response_text.split(',')[indx])[0])
+                    except IndexError:
+                        all_temps.append('NaN')
+                with open(self.fullLogName, "a+") as f:
+                    f.write(f"{dt.datetime.strftime(self.timeData[-1], defaults.DATETIME_FORMAT)}, \
+                                {all_temps}\n")
+                self.currentPlot = False
+            except IndexError:
+                self.connected = False
+                defaults.log.info(msg=f"Couldn't reach {self.name}, connection error. Possible thermocouple issue.")
+            except ValueError:
+                self.connected = False
+                defaults.log.info(msg=f"Couldn't reach {self.name}, connection error")
 
-            if response.status_code == 200:
-                temp_positions = [7, 10, 13, 16]
-                print(response.text)
-                temp_string = re.findall('\d*\.?\d+', response.text.split(',')[7])[0]
-                try:
-                    temperature = float(temp_string)
-                    self.connected = True
-                    self.temperatureData.append(temperature)
-                    self.timeData.append(dt.datetime.now())
-                    all_temps = [re.findall('\d*\.?\d+', response.text.split(',')[indx])[0] for indx in temp_positions]
-                    with open(self.fullLogName, "a+") as f:
-                        f.write(f"{dt.datetime.strftime(self.timeData[-1], defaults.DATETIME_FORMAT)}, \
-                                    {all_temps}\n")
-                except ValueError:
-                    self.connected = False
-
-        except requests.exceptions.ConnectionError:
-            defaults.log.info(msg=f"Couldn't reach {self.name}, connection error")
-            self.connected = False
-
-        except requests.exceptions.Timeout:
-            defaults.log.info(msg=f"Couldn't reach {self.name}, timeout")
-            self.connected = False
 
     def set_active(self):
         # mark DAC as active, and data should be collected and updated
@@ -221,7 +238,8 @@ class DacClass:
             x_data = self.timeData[start_index:end_index]
             y_data = self.temperatureData[start_index:end_index]
             a.title.set_text(
-                f'Cure Results for {self.name} between {dt.datetime.strftime(start_graph_time, defaults.TIME_FORMAT)} and '
+                f'Cure Results for {self.name} between {dt.datetime.strftime(start_graph_time, defaults.TIME_FORMAT)} '
+                f'and '
                 f'{dt.datetime.strftime(end_graph_time, defaults.TIME_FORMAT)}')
             rect_postcure = patches.Rectangle(
                 (mdates.date2num(cure_results[3][0]),

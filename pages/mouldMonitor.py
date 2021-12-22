@@ -1,15 +1,16 @@
-import tkinter as tk
+import datetime as dt
 import re
+import time
+import tkinter as tk
+
+import matplotlib.dates as m_dates
 from matplotlib import style
 from matplotlib.figure import Figure
-import matplotlib.dates as m_dates
-import datetime as dt
-from collections import deque
-import time
-from .tempGraph import TempGraph
+
+from . import defaults
 from .buttonPanel import ButtonPanel
 from .dacClass import DacClass
-from . import defaults
+from .tempGraph import TempGraph
 
 style.use("ggplot")
 
@@ -23,7 +24,6 @@ class MouldMonitor(tk.Tk):
                         _py / _dpi),
                dpi=_dpi)
     a = f.add_subplot(111)
-    dac_plot_points = 1200
 
     dac_list = []
     old_ip_list = []
@@ -31,11 +31,12 @@ class MouldMonitor(tk.Tk):
 
     a.set_ylabel('Temperature (C)')
     a.set_xlabel('Time (s)')
-    a.set_ylim(15,100)
+    a.set_ylim(15, 110)
 
     def __init__(self, ip_file, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.ip_check_time = dt.datetime.now()
+        self.data_check_time = dt.datetime.now()
         self.read_ips(ip_file)
         if not self.new_ip_list:
             print('Add a DAC IP to IP_ADDRESSES.txt to begin')
@@ -56,8 +57,8 @@ class MouldMonitor(tk.Tk):
                 for dac in self.dac_list:
                     dac.scrape_data()
                     time.sleep(1)
-
                 self.update_ip_list()
+
         print('Found at least one dac on the network')
         self.running = True
         tk.Tk.wm_title(self, "Mould Temperature Manager")
@@ -104,23 +105,27 @@ class MouldMonitor(tk.Tk):
         for j, dac in enumerate(self.dac_list):
             if not dac.initialised:
                 dac.initialised = True
-                self.a.plot_date(defaults.downsample_to_max(dac.timeData, self.dac_plot_points),  # x list
-                                 defaults.downsample_to_max(dac.temperatureData, self.dac_plot_points),  # y list
+                self.a.plot_date(defaults.downsample_to_max(dac.timeData, defaults.MAXIMUM_POINTS),  # x list
+                                 defaults.downsample_to_max(dac.temperatureData, defaults.MAXIMUM_POINTS),  # y list
                                  defaults.lineStyles[j % len(defaults.lineStyles)],  # line style, loop round
                                  label=dac.name,  # label
                                  xdate=True)
         self.f.legend()
 
-    def animate(self, i):
+    def refresh_data(self):
+        for dac in self.dac_list:
+            dac.scrape_data()
+            self.data_check_time = dt.datetime.now()
+            dac.write_log()
+
+
+    def update_plots(self, i):
         now = dt.datetime.now()
         self.a.title.set_text(dt.datetime.strftime(now, defaults.TIME_FORMAT))
         for j, dac in enumerate(self.dac_list):
-            if dac.active and dac.initialised:
-                dac.scrape_data()
-                dac.write_log()
-
-                self.a.lines[j].set_xdata(defaults.downsample_to_max(dac.timeData, self.dac_plot_points))
-                self.a.lines[j].set_ydata(defaults.downsample_to_max(dac.temperatureData, self.dac_plot_points))
+            if dac.active and dac.initialised and not dac.currentPlot:
+                self.a.lines[j].set_xdata(defaults.downsample_to_max(dac.timeData, defaults.MAXIMUM_POINTS))
+                self.a.lines[j].set_ydata(defaults.downsample_to_max(dac.temperatureData, defaults.MAXIMUM_POINTS))
         left_limit = min([dac.timeData[0] for dac in self.dac_list])
         right_limit = max([dac.timeData[-1] for dac in self.dac_list])
 
