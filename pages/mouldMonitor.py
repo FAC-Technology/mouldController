@@ -50,7 +50,7 @@ class MouldMonitor(tk.Tk):
             self.dac_list.append(DacClass(ip))
         self.update_ip_list()
         print('Proceeding when any DAC becomes plottable')
-        print('If data exists it is plotted, else new data needs to be gettable')
+        print('If data exists it is plotted, else new data needs to be retrievable')
         dacs_plottable = [False]
 
         while not any(dacs_plottable):

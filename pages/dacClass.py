@@ -34,7 +34,6 @@ class DacClass:
         self.temperatureData = []  # in memory temperature list for plotting
         self.logName = os.path.join(defaults.LOG_FOLDER, defaults.LOG_FILE_NAMING.format(self.date, self.name))
         self.fullLogName = os.path.join(defaults.LOG_FOLDER, defaults.FULL_LOG_FILE_NAMING.format(self.date, self.name))
-        self.monitorPass = False
         self._scalar = 20 * random()
         self._user = "admin"
         self._pwd = "qqqqqqq/"
@@ -148,7 +147,6 @@ class DacClass:
                 self.connected = False
                 defaults.log.info(msg=f"Couldn't reach {self.name}, connection error")
 
-
     def set_active(self):
         # mark DAC as active, and data should be collected and updated
         print(f'Marking {self.name} as active')
@@ -175,17 +173,9 @@ class DacClass:
             msg = f'Not enough data for analysis on {self.name}.\n'
             self._write_to_box(msg_box, msg)
             return
-
-        monitor_output = self._assemble_check_string(self.cure_cycle_check_corner_method())
-        if self.monitorPass:
-            self._write_to_box(msg_box, monitor_output)
-
-        elif isinstance(monitor_output, type(None)):
-            msg = f'No cure cycle detected for {self.name}.\n'
-            self._write_to_box(msg_box, msg)
-
-        else:
-            self._write_to_box(msg_box, monitor_output)
+        cure_results = self.cure_cycle_check_corner_method()
+        monitor_output = self._assemble_results_string(cure_results)
+        self._write_to_box(msg_box, monitor_output)
 
     def export_data(self, msg_box):
         # method gets the cure results, and writes a graph to a file in mould temp exports as a .png
@@ -196,6 +186,7 @@ class DacClass:
             msg = f'Not enough data for export on {self.name}\n.'
             self._write_to_box(msg_box, msg)
             return
+
         now = dt.datetime.now()
 
         _dpi = 100
@@ -273,7 +264,6 @@ class DacClass:
                     'k-',
                     label=self.name,  # label
                     xdate=True)
-        details_text = self._assemble_check_string(cure_results)
         left_limit = x_data[0] - dt.timedelta(minutes=1)
         right_limit = x_data[-1] + dt.timedelta(minutes=1)
 
@@ -351,18 +341,27 @@ class DacClass:
                 break
         return [cured, cure_window_times, post_cured, post_cure_times]
 
-    @staticmethod
-    def _assemble_check_string(check_outcome):
-        ret_string = ""
+    def _assemble_results_string(self, check_outcome):  # takes cure cycle analysis and makes sentences
+        ret_string = f"Checked cure for {self.name}.\n"
+        if check_outcome[0] and check_outcome[3]:
+            ret_string += "Good panel.\n"
         if check_outcome[0]:
-            cure_start_stop = (check_outcome[1][-1] - check_outcome[1][0]).total_seconds() / 60
-            ret_string += f"Panel is cured, and spent {round(cure_start_stop)} minutes at temperature.\n"
+            cure_time = (check_outcome[1][-1] - check_outcome[1][0]).total_seconds() / 60
+            ret_string += f"Curing was recorded for {int(cure_time)} temperature.\n"
             if len(check_outcome[1]) > 2:
                 interrupt_times = "\n".join([str(t.time()) for t in check_outcome[1][1:-1:1]])
-                ret_string += f"It left the cure window between the following times:\n {interrupt_times}"
-            return ret_string
+                ret_string += f"It left the cure window between the following times:\n {', '.join(interrupt_times)}\n"
         else:
-            ret_string += 'No cure cycle detected'
+            ret_string += "Cure conditions not met detected."
+        if check_outcome[2]:
+            postcure_time = (check_outcome[3][-1] - check_outcome[3][0]).total_seconds() / 60
+            ret_string += f"Postcuring was recorded for {int(postcure_time)} minutes.\n"
+            if len(check_outcome[1]) > 2:
+                interrupt_times = "\n".join([str(t.time()) for t in check_outcome[3][1:-1:1]])
+                ret_string += f"It left the postcure window between the following times:\n {interrupt_times}"
+        else:
+            ret_string += "No cure cycle detected."
+        return ret_string
 
     @staticmethod
     def _write_to_box(msg_box, text):
