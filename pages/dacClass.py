@@ -1,4 +1,3 @@
-import datetime
 import datetime as dt
 import math
 import os
@@ -7,8 +6,7 @@ from random import random
 
 import matplotlib.dates as mdates
 import matplotlib.patches as patches
-import numpy as np
-import pandas as pd
+
 import requests
 from matplotlib import style
 from matplotlib.figure import Figure
@@ -219,7 +217,7 @@ class DacClass:
 
         def nearest(items, pivot):
             return min(items, key=lambda x: abs(x - pivot))
-
+        title_text = f"{self.name} cure cycle results:\n"
         if cure_results[0] and cure_results[2]:
             start_graph_time = cure_results[1][0] - dt.timedelta(minutes=20)
             end_graph_time = cure_results[3][-1] + dt.timedelta(minutes=20)
@@ -227,7 +225,6 @@ class DacClass:
             end_index = self.timeData.index(nearest(self.timeData, end_graph_time))
             x_data = self.timeData[start_index:end_index]
             y_data = self.temperatureData[start_index:end_index]
-            title_text = f"{self.name} cure cycle results:\n"
             a.title.set_text(
                 f'Cure Results for {self.name} between {dt.datetime.strftime(start_graph_time, defaults.TIME_FORMAT)} '
                 f'and '
@@ -307,23 +304,24 @@ class DacClass:
         if (self.timeData[-1] - self.timeData[0]).total_seconds() < ccq.B_A:
             return [cured, cure_window_times, post_cured, post_cure_times]
 
-        df = pd.DataFrame({'Datetime': self.timeData, 'temperature': self.temperatureData})
-        df['Datetime'] = pd.to_datetime(df['Datetime'], format=defaults.DATETIME_FORMAT)
-        df = df.set_index(pd.DatetimeIndex(df['Datetime'])).bfill()
+        # df = pd.DataFrame({'Datetime': self.timeData, 'temperature': self.temperatureData})
+        # df['Datetime'] = pd.to_datetime(df['Datetime'], format=defaults.DATETIME_FORMAT)
+        # df = df.set_index(pd.DatetimeIndex(df['Datetime'])).bfill()
 
-        i = len(df)
+        i = len(self.temperatureData)
 
         while not post_cured:
             i -= 1
             if i < 0:
+                i = len(self.temperatureData)
                 break
-            if ccq.postcure_bounds(df['temperature'][i]) and not post_cure_entered:
+            if ccq.postcure_bounds(self.temperatureData[i]) and not post_cure_entered:
                 post_cure_entered = True
-                post_cure_times.insert(0, df.temperature.index[i])
+                post_cure_times.insert(0, self.timeData[i])
 
-            if not ccq.postcure_bounds(df['temperature'][i]) and post_cure_entered:
+            if not ccq.postcure_bounds(self.temperatureData[i]) and post_cure_entered:
                 post_cure_entered = False
-                post_cure_times.insert(0, df.temperature.index[i])
+                post_cure_times.insert(0, self.timeData[i+1])
 
             if len(post_cure_times) % 2 == 0 and post_cure_times:
                 if (post_cure_times[-1] - post_cure_times[0]).total_seconds() > ccq.D_C:
@@ -332,20 +330,18 @@ class DacClass:
                     (post_cure_times[-1] - post_cure_times[0]).total_seconds() > 1.05 * ccq.D_C:
                 post_cured = False
                 break
-        if len(post_cure_times) % 2 == 0 and post_cure_times and not post_cured:
-            i = len(df)
 
         while not cured:
             i -= 1
             if i < 0:
                 break
-            if ccq.cure_bounds(df['temperature'][i]) and not cure_window_entered:
+            if ccq.cure_bounds(self.temperatureData[i]) and not cure_window_entered:
                 cure_window_entered = True
-                cure_window_times.insert(0, df.temperature.index[i])
+                cure_window_times.insert(0, self.timeData[i])
 
-            if not ccq.cure_bounds(df['temperature'][i]) and cure_window_entered:
+            if not ccq.cure_bounds(self.temperatureData[i]) and cure_window_entered:
                 cure_window_entered = False
-                cure_window_times.insert(0, df.temperature.index[i])
+                cure_window_times.insert(0, self.timeData[i+1])
 
             if len(cure_window_times) % 2 == 0 and cure_window_times and \
                     (cure_window_times[-1] - cure_window_times[0]).total_seconds() > ccq.B_A:
