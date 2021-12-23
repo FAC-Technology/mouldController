@@ -105,7 +105,7 @@ class MouldMonitor(tk.Tk):
 
     def initialise_plots(self):
         for j, dac in enumerate(self.dac_list):
-            if not dac.initialised:
+            if not dac.initialised and dac.temperatureData:
                 dac.initialised = True
                 self.a.plot_date(defaults.downsample_to_max(dac.timeData, defaults.MAXIMUM_POINTS),  # x list
                                  defaults.downsample_to_max(dac.temperatureData, defaults.MAXIMUM_POINTS),  # y list
@@ -127,8 +127,8 @@ class MouldMonitor(tk.Tk):
             if dac.active and dac.initialised and not dac.currentPlot:
                 self.a.lines[j].set_xdata(defaults.downsample_to_max(dac.timeData, defaults.MAXIMUM_POINTS))
                 self.a.lines[j].set_ydata(defaults.downsample_to_max(dac.temperatureData, defaults.MAXIMUM_POINTS))
-        left_limit = min([dac.timeData[0] for dac in self.dac_list])
-        right_limit = max([dac.timeData[-1] for dac in self.dac_list])
+        left_limit = min([dac.timeData[0] for dac in self.dac_list if dac.timeData])
+        right_limit = max([dac.timeData[-1] for dac in self.dac_list if dac.timeData])
 
         self.a.set_xlim(left_limit - dt.timedelta(minutes=1),
                         right_limit + dt.timedelta(minutes=1))
@@ -167,11 +167,10 @@ class MouldMonitor(tk.Tk):
                     self.f.legend().remove()
 
     def list_unreachables(self, msg_box):
-        disconnected_list = "Could not connect to:\n"
+        disconnected_list = "! WARNING !\nCould not connect to:\n"
         for dac in self.dac_list:
             if not dac.connected:
-                disconnected_list += dac.name
-        disconnected_list += "!"
+                disconnected_list += f"{dac.name}\n"
         if any([not dac.connected for dac in self.dac_list]):  # only display if any disconnects found
             self._write_to_box(msg_box, disconnected_list)
         else:

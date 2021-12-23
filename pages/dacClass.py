@@ -173,12 +173,17 @@ class DacClass:
                             {self.temperatureData[-1]}\n")
 
     def check_data(self, msg_box):
+        if len(self.temperatureData) < 5:
+            msg = f'Not enough data for analysis on {self.name}.\n'
+            self._write_to_box(msg_box, msg)
+            return
+
         monitor_output = self._assemble_check_string(self.cure_cycle_check_corner_method())
         if self.monitorPass:
             self._write_to_box(msg_box, monitor_output)
 
         elif isinstance(monitor_output, type(None)):
-            msg = f'No cure cycle detected for {self.name}\n.'
+            msg = f'No cure cycle detected for {self.name}.\n'
             self._write_to_box(msg_box, msg)
 
         else:
@@ -189,6 +194,10 @@ class DacClass:
         # the .png is then written to a .pdf which also has some info about what happened as a more descriptive
         # output than what went exactly in the cure cycle.
         # if the cure cycle was a failure, it just prints the graph of all temperature history stored in memory
+        if len(self.temperatureData) < 5:
+            msg = f'Not enough data for export on {self.name}\n.'
+            self._write_to_box(msg_box, msg)
+            return
         now = dt.datetime.now()
 
         _dpi = 100
@@ -218,18 +227,13 @@ class DacClass:
             end_index = self.timeData.index(nearest(self.timeData, end_graph_time))
             x_data = self.timeData[start_index:end_index]
             y_data = self.temperatureData[start_index:end_index]
+            title_text = f"{self.name} cure cycle results:\n"
             a.title.set_text(
                 f'Cure Results for {self.name} between {dt.datetime.strftime(start_graph_time, defaults.TIME_FORMAT)} '
                 f'and '
                 f'{dt.datetime.strftime(end_graph_time, defaults.TIME_FORMAT)}')
-            rect_postcure = patches.Rectangle(
-                (mdates.date2num(cure_results[3][0]),
-                 ccq.Fmin),
-                ccq.D_C / (24 * 3600),  # width
-                ccq.Fmax - ccq.Fmin,  # height
-                color='r',
-                alpha=0.2
-            )
+
+        if cure_results[0]:  #
             rect_cure = patches.Rectangle((mdates.date2num(cure_results[1][0]),
                                            ccq.Emin),
                                           ccq.B_A / (24 * 3600),
@@ -238,16 +242,35 @@ class DacClass:
                                           color='g',
                                           alpha=0.2
                                           )
-            a.add_patch(rect_postcure)
             a.add_patch(rect_cure)
-
+            title_text += f"Cured between {cure_results[1][0]} and {cure_results[1][-1]}\n"
         else:
+            title_text += "Could not find cure.\n"
+
+        if cure_results[2]:
+            rect_postcure = patches.Rectangle(  # draw rectangles on graph if
+                (mdates.date2num(cure_results[3][0]),
+                 ccq.Fmin),
+                ccq.D_C / (24 * 3600),  # width
+                ccq.Fmax - ccq.Fmin,  # height
+                color='r',
+                alpha=0.2
+            )
+            a.add_patch(rect_postcure)
+
+            title_text += f"Postcured between {cure_results[3][0]} and {cure_results[3][-1]}"
+        else:
+            title_text += "Could not find postcure."
+
+        if not (cure_results[0] and cure_results[2]):
             x_data = self.timeData
             y_data = self.temperatureData
             a.title.set_text(f'Time history for {self.name}, no cure cycle was detected')
+
+        a.title.set_text(title_text)
         avg_window = 5
-        y_data = np.convolve(y_data, np.ones(avg_window)/avg_window, mode="valid")
-        x_data = x_data[:-avg_window+1]
+        # y_data = np.convolve(y_data, np.ones(avg_window)/avg_window, mode="valid")
+        # x_data = x_data[:-avg_window+1]
         a.plot_date(x_data,
                     y_data,
                     'k-',
