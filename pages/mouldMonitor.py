@@ -30,11 +30,12 @@ class MouldMonitor(tk.Tk):
     new_ip_list = []
 
     a.set_ylabel('Temperature (C)')
-    a.set_xlabel('Time (s)')
+    a.set_xlabel('Clock Time')
     a.set_ylim(15, 110)
 
     def __init__(self, ip_file, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
+        self.running = False
         self.ip_check_time = dt.datetime.now()
         self.data_check_time = dt.datetime.now()
         self.read_ips(ip_file)
@@ -47,13 +48,14 @@ class MouldMonitor(tk.Tk):
                 self.read_ips(ip_file)
         for ip in self.new_ip_list:
             self.dac_list.append(DacClass(ip))
+        self.update_ip_list()
+        print('Proceeding when any DAC becomes plottable')
+        print('If data exists it is plotted, else new data needs to be gettable')
+        dacs_plottable = [False]
 
-        print('Proceeding when any DAC connects')
-        print('Consider checking the IP list is correct')
-        dacs_reachable = [False]
-        while not any(dacs_reachable):
-            dacs_reachable = [dac.connected for dac in self.dac_list]
-            if not any(dacs_reachable):
+        while not any(dacs_plottable):
+            dacs_plottable = [dac.connected or dac.temperatureData for dac in self.dac_list]
+            if not any(dacs_plottable):
                 for dac in self.dac_list:
                     dac.scrape_data()
                     time.sleep(1)
@@ -118,7 +120,6 @@ class MouldMonitor(tk.Tk):
             self.data_check_time = dt.datetime.now()
             dac.write_log()
 
-
     def update_plots(self, i):
         now = dt.datetime.now()
         self.a.title.set_text(dt.datetime.strftime(now, defaults.TIME_FORMAT))
@@ -158,22 +159,24 @@ class MouldMonitor(tk.Tk):
             if ip not in [dac.address for dac in self.dac_list]:
                 self.dac_list.append(DacClass(address=ip))
                 defaults.log.info(f'Adding {ip} to list of DACs')
-                print('Adding new dac buttons')
-                self.button_list.append({})
-                self.button_list[-1]['name'] = self.dac_list[-1].name
-                self.button_list[-1]['buttons'] = self.button_frame.create_row(self.button_frame, self.dac_list[-1])
-                self.f.legend().remove()
+                if self.running: # only add if panel has been created
+                    print('Adding new dac buttons')
+                    self.button_list.append({})
+                    self.button_list[-1]['name'] = self.dac_list[-1].name
+                    self.button_list[-1]['buttons'] = self.button_frame.create_row(self.button_frame, self.dac_list[-1])
+                    self.f.legend().remove()
 
-    def list_unreachables(self,msg_box):
+    def list_unreachables(self, msg_box):
         disconnected_list = "Could not connect to:\n"
         for dac in self.dac_list:
             if not dac.connected:
                 disconnected_list += dac.name
         disconnected_list += "!"
-        if any([not dac.connected for dac in self.dac_list]): # only display if any disconnects found
+        if any([not dac.connected for dac in self.dac_list]):  # only display if any disconnects found
             self._write_to_box(msg_box, disconnected_list)
         else:
             self._write_to_box(msg_box, "Connected to all dacs")
+
     @staticmethod
     def _write_to_box(msg_box, text):
         msg_box.config(state='normal')

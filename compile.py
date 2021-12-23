@@ -8,4 +8,4 @@ for c in os.listdir('dist'):
             current_ver = latest_ver + 1
 
 exeFname = f"mouldMonitor_v{int(current_ver)}"
-os.system(f'/venv/Scripts/activate & pyinstaller --onefile --specpath "mould logs" --add-data "FACT_LOGO.png;." -n {exeFname} main.py')
+os.system(f'/venv/Scripts/activate & pyinstaller --onefile --specpath "mould logs" -n {exeFname} main.py')
