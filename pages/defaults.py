@@ -50,7 +50,7 @@ console = logging.StreamHandler()
 format_str = '%(asctime)s\t%(levelname)s -- %(filename)s:%(lineno)s -- %(message)s'
 console.setFormatter(logging.Formatter(format_str))
 handler = logging.handlers.WatchedFileHandler(
-    os.environ.get("LOGFILE", f"{LOG_FOLDER}/main.log"))
+    os.environ.get("LOGFILE", f"{LOG_FOLDER}/mouldMonitor_logs.txt"))
 handler.setFormatter(logging.Formatter(format_str))
 log.addHandler(handler)
 log.setLevel(os.environ.get("LOGLEVEL", "INFO"))

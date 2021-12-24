@@ -1,7 +1,11 @@
 import os
-import datetime as dt
+
+""" 
+Run this to compile a portable .exe of the Mould Monitor
+"""
+
 current_ver = 1
-for c in os.listdir('dist'):
+for c in os.listdir('dist'):  # hunt for the most recent version number
     if c[-6] == 'v':
         latest_ver = float(c[-5])
         if latest_ver >= current_ver:

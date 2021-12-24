@@ -115,7 +115,7 @@ class DacClass:
                                     cookies=cookies,
                                     auth=(self._user, self._pwd),
                                     verify=False,
-                                    timeout=0.1)
+                                    timeout=0.075)
         except requests.exceptions.ConnectTimeout:
             self.connected = False
             defaults.log.info(msg=f"Couldn't reach {self.name}, connection error")

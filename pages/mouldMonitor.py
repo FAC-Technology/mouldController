@@ -24,21 +24,22 @@ class MouldMonitor(tk.Tk):
                         _py / _dpi),
                dpi=_dpi)
     a = f.add_subplot(111)
-
-    dac_list = []
-    old_ip_list = []
-    new_ip_list = []
-
     a.set_ylabel('Temperature (C)')
     a.set_xlabel('Clock Time')
     a.set_ylim(15, 110)
+    a.xaxis.set_major_formatter(m_dates.DateFormatter("%H:%M"))
 
     def __init__(self, ip_file, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.running = False
-        self.ip_check_time = dt.datetime.now()
-        self.data_check_time = dt.datetime.now()
-        self.read_ips(ip_file)
+        self.ip_check_time = dt.datetime(1970, 1, 1)  # initialise a note of when IPs were last checked
+        self.data_check_time = dt.datetime(1970, 1, 1)  # initialise a note of when data was last checked
+
+        self.dac_list = []  # list of all dacs, made from IP_ADDRESSES.txt
+        self.old_ip_list = []  # used for comparison
+        self.new_ip_list = []  # ip list of DACs
+
+        self.read_ips(ip_file)  # check IP address file, wait for a file if no IPs found.
         if not self.new_ip_list:
             print('Add a DAC IP to IP_ADDRESSES.txt to begin')
             print(f'Find this file in {defaults.IP_FILE}')
@@ -52,7 +53,6 @@ class MouldMonitor(tk.Tk):
         print('Proceeding when any DAC becomes plottable')
         print('If data exists it is plotted, else new data needs to be retrievable')
         dacs_plottable = [False]
-
         while not any(dacs_plottable):
             dacs_plottable = [dac.connected or dac.temperatureData for dac in self.dac_list]
             if not any(dacs_plottable):
@@ -63,23 +63,22 @@ class MouldMonitor(tk.Tk):
 
         print('Found at least one dac on the network')
         self.running = True
+        # title
         tk.Tk.wm_title(self, "Mould Temperature Manager")
-
+        # box in which to put everything
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
         self.frames = {}
-        self.a.xaxis.set_major_formatter(m_dates.DateFormatter("%H:%M"))
-        self.plts = []
-
+        # create interfaces
         self.graph_frame = TempGraph(container, self, self.f)
         self.button_frame = ButtonPanel(container)
         self.frames[TempGraph] = self.graph_frame
         self.frames[ButtonPanel] = self.button_frame
+        self.frames[TempGraph].tkraise()
+        self.frames[ButtonPanel].tkraise()
 
-        self.show_frame(TempGraph)
-        self.show_frame(ButtonPanel)
         self.graph_frame.grid(row=0, column=0)
         self.button_frame.grid(row=0, column=1)
 
@@ -99,10 +98,6 @@ class MouldMonitor(tk.Tk):
         self.running = False
         self.destroy()
 
-    def show_frame(self, cont):
-        frame = self.frames[cont]
-        frame.tkraise()
-
     def initialise_plots(self):
         for j, dac in enumerate(self.dac_list):
             if not dac.initialised and dac.temperatureData:
@@ -116,9 +111,12 @@ class MouldMonitor(tk.Tk):
 
     def refresh_data(self):
         for dac in self.dac_list:
+            l1 = len(dac.temperatureData)
             dac.scrape_data()
             self.data_check_time = dt.datetime.now()
-            dac.write_log()
+            l2 = len(dac.temperatureData)
+            if l1 != l2:
+                dac.write_log()
 
     def update_plots(self, i):
         now = dt.datetime.now()
