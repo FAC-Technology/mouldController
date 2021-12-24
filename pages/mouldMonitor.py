@@ -61,7 +61,7 @@ class MouldMonitor(tk.Tk):
                     time.sleep(1)
                 self.update_ip_list()
 
-        print('Found at least one dac on the network')
+        print('Found at least one dac to plot')
         self.running = True
         # title
         tk.Tk.wm_title(self, "Mould Temperature Manager")
@@ -115,8 +115,8 @@ class MouldMonitor(tk.Tk):
             dac.scrape_data()
             self.data_check_time = dt.datetime.now()
             l2 = len(dac.temperatureData)
-            if l1 != l2:
-                dac.write_log()
+            if l2 > l1:
+                dac.write_log()  # only write to log if data is actually longer now
 
     def update_plots(self, i):
         now = dt.datetime.now()
@@ -125,11 +125,12 @@ class MouldMonitor(tk.Tk):
             if dac.active and dac.initialised and not dac.currentPlot:
                 self.a.lines[j].set_xdata(defaults.downsample_to_max(dac.timeData, defaults.MAXIMUM_POINTS))
                 self.a.lines[j].set_ydata(defaults.downsample_to_max(dac.temperatureData, defaults.MAXIMUM_POINTS))
+                dac.currentPlot = True  # label dac plot as up to date.
         left_limit = min([dac.timeData[0] for dac in self.dac_list if dac.timeData])
         right_limit = max([dac.timeData[-1] for dac in self.dac_list if dac.timeData])
 
-        self.a.set_xlim(left_limit - dt.timedelta(minutes=1),
-                        right_limit + dt.timedelta(minutes=1))
+        self.a.set_xlim(left_limit - dt.timedelta(minutes=5),
+                        right_limit + dt.timedelta(minutes=5))
 
     def read_ips(self, file):
         pattern = re.compile("^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$")  # regexp magic to check IP format
