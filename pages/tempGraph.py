@@ -15,6 +15,3 @@ class TempGraph(tk.Frame):
         canvas = FigureCanvasTkAgg(figure, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-
-    def set_x_axis(self, axes, frequency):
-        axes.xaxis.set_major_locator(m_dates.SecondLocator(interval=frequency))

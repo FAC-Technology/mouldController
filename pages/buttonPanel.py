@@ -6,7 +6,6 @@ class ButtonPanel(tk.Frame):
 
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
-        # label = tk.title(self, text="Heater Management", font=defaults.LARGE_FONT)
         self.button_rows = []
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(3, weight=1)
