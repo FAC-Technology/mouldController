@@ -5,11 +5,16 @@ import matplotlib.animation as animation
 from pages import defaults
 from pages.mouldMonitor import MouldMonitor
 from pages.defaults import PLOT_REFRESH_RATE
+try:
+    import pyi_splash
+    splash_present = True
+except ModuleNotFoundError:
+    splash_present = False
 
 matplotlib.use("TkAgg")
 
 # initialise the class object holding the window.
-app = MouldMonitor(ip_file=defaults.IP_FILE)
+app = MouldMonitor(ip_file=defaults.IP_FILE, splash=splash_present)
 # update the graph using the animate method
 ani = animation.FuncAnimation(app.f, app.update_plots, interval=PLOT_REFRESH_RATE)
 app.initialise_plots()  # initialise the plots with the existing data.

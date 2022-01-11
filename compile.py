@@ -12,4 +12,10 @@ for c in os.listdir('dist'):  # hunt for the most recent version number
             current_ver = latest_ver + 1
 
 exeFname = f"mouldMonitor_v{int(current_ver)}"
-os.system(f'/venv/Scripts/activate & pyinstaller --onefile --specpath "mould logs" -n {exeFname} main.py')
+os.system(f'/venv/Scripts/activate & '
+          f'pyinstaller '
+          f'--splash "../FACT_LOGO.png" '
+          f'--onefile '
+          f'--specpath "mould logs" '
+          f'-n {exeFname} '
+          f'main.py')

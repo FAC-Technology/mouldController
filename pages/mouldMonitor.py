@@ -12,6 +12,12 @@ from .buttonPanel import ButtonPanel
 from .dacClass import DacClass
 from .tempGraph import TempGraph
 
+try:
+    import pyi_splash
+    splash_present = True
+except ModuleNotFoundError:
+    splash_present = False
+
 style.use("ggplot")
 
 
@@ -29,7 +35,7 @@ class MouldMonitor(tk.Tk):
     a.set_ylim(15, 110)
     a.xaxis.set_major_formatter(m_dates.DateFormatter("%H:%M"))
 
-    def __init__(self, ip_file, *args, **kwargs):
+    def __init__(self, ip_file, splash, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.running = False
         self.ip_check_time = dt.datetime(1970, 1, 1)  # initialise a note of when IPs were last checked
@@ -52,6 +58,9 @@ class MouldMonitor(tk.Tk):
         self.update_ip_list()
         print('Proceeding when any DAC becomes plottable')
         print('If data exists it is plotted, else new data needs to be retrievable')
+        if splash:
+            pyi_splash.close()
+
         dacs_plottable = [False]
         while not any(dacs_plottable):
             dacs_plottable = [dac.connected or dac.temperatureData for dac in self.dac_list]
