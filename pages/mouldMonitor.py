@@ -11,7 +11,7 @@ from . import defaults
 from .buttonPanel import ButtonPanel
 from .dacClass import DacClass
 from .tempGraph import TempGraph
-
+from .hunterClass import Hunter
 try:
     import pyi_splash
     splash_present = True
@@ -44,26 +44,29 @@ class MouldMonitor(tk.Tk):
         self.dac_list = []  # list of all dacs, made from IP_ADDRESSES.txt
         self.old_ip_list = []  # used for comparison
         self.new_ip_list = []  # ip list of DACs
-
-        self.read_ips(ip_file)  # check IP address file, wait for a file if no IPs found.
-        if not self.new_ip_list:
-            print('Add a DAC IP to IP_ADDRESSES.txt to begin')
-            print(f'Find this file in {defaults.IP_FILE}')
-            defaults.log.info(msg='No IPs in list')
-            while not self.new_ip_list:
-                time.sleep(1)
-                self.read_ips(ip_file)
-        for ip in self.new_ip_list:
-            self.dac_list.append(DacClass(ip))
-        self.update_ip_list()
-        print('Proceeding when any DAC becomes plottable')
-        print('If data exists it is plotted, else new data needs to be retrievable')
+        self.hunter = Hunter(ip_file)  # search for dacs on network
+        if self.hunter.found_count > 0:
+            for nd in self.hunter.nds:
+                self.dac_list.append(DacClass(name=nd['name'], address=nd['location']))
+        # self.read_ips(ip_file)  # check IP address file, wait for a file if no IPs found.
+        # if not self.new_ip_list:
+        #     print('Add a DAC IP to IP_ADDRESSES.txt to begin')
+        #     print(f'Find this file in {defaults.IP_FILE}')
+        #     defaults.log.info(msg='No IPs in list')
+        #     while not self.new_ip_list:
+        #         time.sleep(1)
+        #         self.read_ips(ip_file)
+        # for ip in self.new_ip_list:
+        #     self.dac_list.append(DacClass(ip))
+        # self.update_ip_list()
+        # print('Proceeding when any DAC becomes plottable')
+        # print('If data exists it is plotted, else new data needs to be retrievable')
         if splash:
             pyi_splash.close()
 
         dacs_plottable = [False]
         while not any(dacs_plottable):
-            dacs_plottable = [dac.connected or dac.temperatureData for dac in self.dac_list]
+            dacs_plottable = [dac.temperatureData for dac in self.dac_list]
             if not any(dacs_plottable):
                 for dac in self.dac_list:
                     dac.scrape_data()
@@ -144,9 +147,12 @@ class MouldMonitor(tk.Tk):
     def read_ips(self, file):
         pattern = re.compile("^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$")  # regexp magic to check IP format
         with open(file, 'r') as f:
-            ips = f.read().splitlines()
-        ips = list(dict.fromkeys(ips))
-        self.new_ip_list = [ip for ip in ips if pattern.match(ip)]  # remove all non-conforming lines
+            lines = f.read().splitlines()
+        lines = list(dict.fromkeys(lines))  # remove duplicates
+        for line in lines:
+            parts = line.split(',')
+            if len(parts) > 1:  # only add if the line has a comma to separate
+                self.new_ip_list = [ip for ip in parts[1] if pattern.match(ip)]  # remove all non-conforming lines
 
     def update_ip_list(self):
         self.ip_check_time = dt.datetime.now()
@@ -165,7 +171,7 @@ class MouldMonitor(tk.Tk):
 
         for ip in new_ip_list:
             if ip not in [dac.address for dac in self.dac_list]:
-                self.dac_list.append(DacClass(address=ip))
+                self.dac_list.append(DacClass(address=ip,serial=0))
                 defaults.log.info(f'Adding {ip} to list of DACs')
                 if self.running: # only add if panel has been created
                     print('Adding new dac buttons')

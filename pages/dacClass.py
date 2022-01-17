@@ -24,8 +24,8 @@ regarding each individual nanodac controller.
 
 class DacClass:
 
-    def __init__(self, address):
-        self.name = "dac_" + address.split('.')[-1]
+    def __init__(self, name, address):
+        self.name = name
         self.address = address
         self.active = True  # each DAC has an 'active' attribute for if the nanodac is currently working.
         self.initialised = False  # ensure each DAC is only started once.
@@ -36,7 +36,8 @@ class DacClass:
         self.fullLogName = os.path.join(defaults.LOG_FOLDER, defaults.FULL_LOG_FILE_NAMING.format(self.date, self.name))
         self._scalar = 20 * random()
         self._user = "admin"
-        self._pwd = "qqqqqqq/"
+        print(f'name is {name}')
+        self._pwd = "qqqqqqq" + name[-1]
         self._logMemory = 0  # used to count how many days in the past a log has been searched for
         self.connected = False
         self.currentPlot = True
@@ -115,8 +116,10 @@ class DacClass:
                                     cookies=cookies,
                                     auth=(self._user, self._pwd),
                                     verify=False,
-                                    timeout=0.075)
-        except requests.exceptions.ConnectTimeout:
+                                    timeout=0.1)
+        except (requests.exceptions.ConnectTimeout,
+                requests.exceptions.ReadTimeout,
+                requests.exceptions.ConnectionError):
             self.connected = False
             defaults.log.info(msg=f"Couldn't reach {self.name}, connection error")
             return

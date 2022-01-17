@@ -13,7 +13,8 @@ except ModuleNotFoundError:
 
 matplotlib.use("TkAgg")
 
-# initialise the class object holding the window.
+
+# initialise the application
 app = MouldMonitor(ip_file=defaults.IP_FILE, splash=splash_present)
 # update the graph using the animate method
 ani = animation.FuncAnimation(app.f, app.update_plots, interval=PLOT_REFRESH_RATE)

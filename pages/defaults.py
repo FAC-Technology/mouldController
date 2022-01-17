@@ -55,9 +55,19 @@ handler.setFormatter(logging.Formatter(format_str))
 log.addHandler(handler)
 log.setLevel(os.environ.get("LOGLEVEL", "INFO"))
 
+cookies = {
+    'session': '(null)',
+}
+headers = {
+    'Connection': 'close',
+    'Accept': '*/*',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
+                  ' Chrome/96.0.4664.45 Safari/537.36',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8,de;q=0.7',
+}
 
 # downsize arrays to manageable plot sizes
-
 def downsample_to_proportion(rows, proportion):
     counter = 0.0
     last_counter = None
