@@ -36,7 +36,6 @@ class DacClass:
         self.fullLogName = os.path.join(defaults.LOG_FOLDER, defaults.FULL_LOG_FILE_NAMING.format(self.date, self.name))
         self._scalar = 20 * random()
         self._user = "admin"
-        print(f'name is {name}')
         self._pwd = "qqqqqqq" + name[-1]
         self._logMemory = 0  # used to count how many days in the past a log has been searched for
         self.connected = False
