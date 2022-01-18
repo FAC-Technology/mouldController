@@ -9,9 +9,7 @@ GRAPH_EXPORT_NAME = "TemperatureReport_{}-{}"
 DESKTOP_FOLDER = "Mould Monitor"
 DESKTOP_PATH = os.path.expanduser(os.path.join('~', 'Desktop', DESKTOP_FOLDER))
 LOG_FOLDER = "Data Logs"
-IP_FILENAME = "IP_ADDRESSES.txt"
 EXPORT_PATH = os.path.join(DESKTOP_PATH, EXPORT_FOLDER)
-IP_FILE = os.path.join(DESKTOP_PATH, IP_FILENAME)
 LOG_FOLDER = os.path.join(DESKTOP_PATH, LOG_FOLDER)
 IP_CHECK_PERIOD = 15  # seconds
 DATA_REFRESH_RATE = 1  # seconds
@@ -38,12 +36,6 @@ if not os.path.isdir(LOG_FOLDER):  # check folder for logs
     os.mkdir(LOG_FOLDER)
     with open(os.path.join(LOG_FOLDER, "main.log"), 'w+'):  # touch main log file
         pass
-
-if not os.path.isfile(IP_FILE):  # IP address folder
-    with open(IP_FILE, 'w+') as f:
-        f.writelines(["# IP address list for Eurotherm nanodacs\n",
-                      "# Any line not of form X.X.X.X is ignored\n",
-                      "x192.168.0.1\n"])
 
 log = logging.getLogger()
 console = logging.StreamHandler()

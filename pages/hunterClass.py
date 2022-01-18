@@ -13,19 +13,33 @@ def try_pwd(target, guess):
                                 cookies=defaults.cookies,
                                 auth=(target['user'], guess),
                                 verify=False,
-                                timeout=0.12)
+                                timeout=0.4)
         if response.status_code == 200:
             return True
         else:
             return False
     except (requests.exceptions.ConnectTimeout,
-            requests.exceptions.ReadTimeout,
-            requests.exceptions.ConnectionError):
+            requests.exceptions.ReadTimeout):
+        try:
+            response = requests.get(f"http://{target['location']}",
+                                    headers=defaults.headers,
+                                    cookies=defaults.cookies,
+                                    auth=(target['user'], guess),
+                                    verify=False,
+                                    timeout=1)
+        except (requests.exceptions.ConnectTimeout,
+                requests.exceptions.ReadTimeout):
+            defaults.log.warning(msg=f"{target['name']} timed out over a second")
+            if response.status_code == 200:
+                return True
+            else:
+                return False
+    except    requests.exceptions.ConnectionError:
         return False
 
 
 class Hunter:
-    def __init__(self, user_file):
+    def __init__(self):
         _s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         _s.connect(("8.8.8.8", 80))
         _full_ip = _s.getsockname()[0]
@@ -36,11 +50,13 @@ class Hunter:
         self.dac_count = 8
         self._pwd_list = [f'qqqqqqq{i+1}' for i in range(self.dac_count)]
         self.populate_list()
-        self.ip_file = user_file
 
     def populate_list(self):
         self.find_nd_ips()
         self.pwd_test()
+        for i, nd in enumerate(self.nds):
+            if nd['name'] == '':
+                self.nds.remove(nd)
         self.found_count = len(self.nds)
 
     def find_nd_ips(self):

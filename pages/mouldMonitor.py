@@ -35,7 +35,7 @@ class MouldMonitor(tk.Tk):
     a.set_ylim(15, 110)
     a.xaxis.set_major_formatter(m_dates.DateFormatter("%H:%M"))
 
-    def __init__(self, ip_file, splash, *args, **kwargs):
+    def __init__(self, splash, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.running = False
         self.ip_check_time = dt.datetime(1970, 1, 1)  # initialise a note of when IPs were last checked
@@ -44,23 +44,16 @@ class MouldMonitor(tk.Tk):
         self.dac_list = []  # list of all dacs, made from IP_ADDRESSES.txt
         self.old_ip_list = []  # used for comparison
         self.new_ip_list = []  # ip list of DACs
-        self.hunter = Hunter(ip_file)  # search for dacs on network
-        if self.hunter.found_count > 0:
-            for nd in self.hunter.nds:
-                self.dac_list.append(DacClass(name=nd['name'], address=nd['location']))
-        # self.read_ips(ip_file)  # check IP address file, wait for a file if no IPs found.
-        # if not self.new_ip_list:
-        #     print('Add a DAC IP to IP_ADDRESSES.txt to begin')
-        #     print(f'Find this file in {defaults.IP_FILE}')
-        #     defaults.log.info(msg='No IPs in list')
-        #     while not self.new_ip_list:
-        #         time.sleep(1)
-        #         self.read_ips(ip_file)
-        # for ip in self.new_ip_list:
-        #     self.dac_list.append(DacClass(ip))
-        # self.update_ip_list()
-        # print('Proceeding when any DAC becomes plottable')
-        # print('If data exists it is plotted, else new data needs to be retrievable')
+        self.hunter = Hunter()  # create hunter, which in __init__ searches for dacs on network
+        if self.hunter.found_count == 0:
+            print("Couldn't find any nanodacs, waiting to find one to proceed")
+
+        while self.hunter.found_count == 0:
+            self.hunter.populate_list()
+            time.sleep(1)
+        for nd in self.hunter.nds:
+            self.dac_list.append(DacClass(name=nd['name'], address=nd['location']))
+
         if splash:
             pyi_splash.close()
 
@@ -77,6 +70,7 @@ class MouldMonitor(tk.Tk):
         self.running = True
         # title
         tk.Tk.wm_title(self, "Mould Temperature Manager")
+        tk.Tk.iconbitmap
         # box in which to put everything
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
@@ -144,35 +138,14 @@ class MouldMonitor(tk.Tk):
         self.a.set_xlim(left_limit - dt.timedelta(minutes=5),
                         right_limit + dt.timedelta(minutes=5))
 
-    def read_ips(self, file):
-        pattern = re.compile("^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$")  # regexp magic to check IP format
-        with open(file, 'r') as f:
-            lines = f.read().splitlines()
-        lines = list(dict.fromkeys(lines))  # remove duplicates
-        for line in lines:
-            parts = line.split(',')
-            if len(parts) > 1:  # only add if the line has a comma to separate
-                self.new_ip_list = [ip for ip in parts[1] if pattern.match(ip)]  # remove all non-conforming lines
 
-    def update_ip_list(self):
+    def update_dacs(self):
         self.ip_check_time = dt.datetime.now()
-        self.read_ips(defaults.IP_FILE)
-        if self.new_ip_list != self.old_ip_list:
-            print('Updating DACs')
-            self.old_ip_list = self.new_ip_list
-            self.updateDACs(self.new_ip_list)
-
-    def updateDACs(self, new_ip_list):
-        for dac in self.dac_list:
-            if dac.address not in new_ip_list and dac.active:
-                dac.set_inactive()
-            elif dac.address in new_ip_list and not dac.active:
-                dac.set_active()
-
-        for ip in new_ip_list:
-            if ip not in [dac.address for dac in self.dac_list]:
-                self.dac_list.append(DacClass(address=ip,serial=0))
-                defaults.log.info(f'Adding {ip} to list of DACs')
+        self.hunter.populate_list()
+        for nd in self.hunter.nds:
+            if nd['location'] not in [dac.address for dac in self.dac_list]:
+                self.dac_list.append(DacClass(name=nd['name'], address=nd['location']))
+                defaults.log.info(f"Adding {nd['name']} to list of DACs")
                 if self.running: # only add if panel has been created
                     print('Adding new dac buttons')
                     self.button_list.append({})

@@ -15,7 +15,7 @@ matplotlib.use("TkAgg")
 
 
 # initialise the application
-app = MouldMonitor(ip_file=defaults.IP_FILE, splash=splash_present)
+app = MouldMonitor(splash=splash_present)
 # update the graph using the animate method
 ani = animation.FuncAnimation(app.f, app.update_plots, interval=PLOT_REFRESH_RATE)
 app.initialise_plots()  # initialise the plots with the existing data.
@@ -28,6 +28,6 @@ while app.is_running():
         app.refresh_data()
 
     if (dt.datetime.now() - app.ip_check_time).total_seconds() > defaults.IP_CHECK_PERIOD:
-        app.update_ip_list()
+        app.update_dacs()
         app.initialise_plots()
         app.list_unreachables(app.button_frame.msg_box)
