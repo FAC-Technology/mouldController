@@ -13,28 +13,15 @@ def try_pwd(target, guess):
                                 cookies=defaults.cookies,
                                 auth=(target['user'], guess),
                                 verify=False,
-                                timeout=0.4)
+                                timeout=1)
         if response.status_code == 200:
             return True
         else:
             return False
     except (requests.exceptions.ConnectTimeout,
             requests.exceptions.ReadTimeout):
-        try:
-            response = requests.get(f"http://{target['location']}",
-                                    headers=defaults.headers,
-                                    cookies=defaults.cookies,
-                                    auth=(target['user'], guess),
-                                    verify=False,
-                                    timeout=1)
-        except (requests.exceptions.ConnectTimeout,
-                requests.exceptions.ReadTimeout):
-            defaults.log.warning(msg=f"{target['name']} timed out over a second")
-            if response.status_code == 200:
-                return True
-            else:
-                return False
-    except    requests.exceptions.ConnectionError:
+        defaults.log.warning(msg=f"{target['name']} timed out over a second")
+    except requests.exceptions.ConnectionError:
         return False
 
 

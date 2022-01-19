@@ -70,7 +70,6 @@ class MouldMonitor(tk.Tk):
         self.running = True
         # title
         tk.Tk.wm_title(self, "Mould Temperature Manager")
-        tk.Tk.iconbitmap
         # box in which to put everything
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)

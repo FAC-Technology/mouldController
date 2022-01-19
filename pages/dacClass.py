@@ -125,7 +125,6 @@ class DacClass:
 
         if response.status_code == 200:
             temp_positions = [7, 10, 13, 16]  # positions in the string of temperature values
-            print(response.text)
             temp_string = re.findall('\d*\.?\d+', response.text.split(',')[7])[0]
             try:
                 temperature = float(temp_string)
