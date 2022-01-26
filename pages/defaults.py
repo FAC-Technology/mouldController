@@ -12,7 +12,7 @@ LOG_FOLDER = "Data Logs"
 EXPORT_PATH = os.path.join(DESKTOP_PATH, EXPORT_FOLDER)
 LOG_FOLDER = os.path.join(DESKTOP_PATH, LOG_FOLDER)
 IP_CHECK_PERIOD = 15  # seconds
-DATA_REFRESH_RATE = 1  # seconds
+DATA_REFRESH_RATE = 4  # seconds
 PLOT_REFRESH_RATE = 1000  # milliseconds
 DATE_FORMAT = "%d-%m-%y"
 TIME_FORMAT = "%H:%M:%S"
@@ -23,7 +23,7 @@ LARGE_FONT = ("Arial", 14)
 SMALL_FONT = ("Arial", 12)
 LOG_FILE_NAMING = "Temperature Log {} {}.csv"
 FULL_LOG_FILE_NAMING = "Complete Temperature Log {} {}.csv"
-MAXIMUM_POINTS = 500  # maximum number of points to plot
+MAXIMUM_POINTS = 300  # maximum number of points to plot
 # check prerequisite files exist.
 # exists in /Documents/Mould Temperature Exports
 if not os.path.isdir(DESKTOP_PATH):  # check destination folder

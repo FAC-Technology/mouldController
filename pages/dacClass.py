@@ -87,14 +87,6 @@ class DacClass:
         else:
             self._write_to_box(msg_box, f"Couldn't find log for {prev_day.strftime(defaults.DATE_FORMAT)}")
 
-    def get_data(self):  # legacy function to generate temp data without a DAC
-        if dt.datetime.now().microsecond > 5e5:
-            temperature = 71 + (self._scalar * math.sin(0.2 * (dt.datetime.now().second +
-                                                               dt.datetime.now().microsecond * 1e-6)))
-            self.currentPlot = False
-            self.temperatureData.append(temperature)
-            self.timeData.append(dt.datetime.now())
-
     def scrape_data(self):  # extracts numerical data request from nanodac on network
 
         cookies = {
@@ -115,21 +107,29 @@ class DacClass:
                                     cookies=cookies,
                                     auth=(self._user, self._pwd),
                                     verify=False,
-                                    timeout=0.1)
+                                    timeout=0.2)
         except (requests.exceptions.ConnectTimeout,
                 requests.exceptions.ReadTimeout,
-                requests.exceptions.ConnectionError):
+                requests.exceptions.ConnectionError) as e:
             self.connected = False
+            print(f'Struggling with data collection for raeson of {e}')
             defaults.log.info(msg=f"Couldn't reach {self.name}, connection error")
             return
 
-        if response.status_code == 200:
+        if 'Control Temp' in response.text:
             temp_positions = [7, 10, 13, 16]  # positions in the string of temperature values
-            temp_string = re.findall('\d*\.?\d+', response.text.split(',')[7])[0]
+            defaults.log.info(f'Got string {response.text} from {self.name}')
+            temp_string = ''  # initialise to stop range errors
+            try:
+                temp_string = re.findall('\d*\.?\d+', response.text.split(',')[7])[0]
+            except:
+                defaults.log.warning(f'Got string {response.text} from {self.name}, fucked')
+
             try:
                 temperature = float(temp_string)
                 self.connected = True
                 self.temperatureData.append(temperature)
+                print(f'Got tc1, {temperature}, length of array now {len(self.temperatureData)}')
                 self.timeData.append(dt.datetime.now())
                 all_temps = []
                 for indx in temp_positions:
@@ -344,24 +344,24 @@ class DacClass:
 
     def _assemble_results_string(self, check_outcome):  # takes cure cycle analysis and makes sentences
         ret_string = f"Checked cure for {self.name}.\n"
-        if check_outcome[0] and check_outcome[3]:
+        if check_outcome[0] and check_outcome[2]:
             ret_string += "Good panel.\n"
         if check_outcome[0]:
             cure_time = (check_outcome[1][-1] - check_outcome[1][0]).total_seconds() / 60
             ret_string += f"Curing was recorded for {int(cure_time)} temperature.\n"
             if len(check_outcome[1]) > 2:
                 interrupt_times = "\n".join([str(t.time()) for t in check_outcome[1][1:-1:1]])
-                ret_string += f"It left the cure window between the following times:\n {', '.join(interrupt_times)}\n"
+                ret_string += f"It left the cure window between the following times:\n{interrupt_times}\n"
         else:
-            ret_string += "Cure conditions not met detected."
+            ret_string += "Cure conditions not met."
         if check_outcome[2]:
             postcure_time = (check_outcome[3][-1] - check_outcome[3][0]).total_seconds() / 60
             ret_string += f"Postcuring was recorded for {int(postcure_time)} minutes.\n"
             if len(check_outcome[1]) > 2:
                 interrupt_times = "\n".join([str(t.time()) for t in check_outcome[3][1:-1:1]])
-                ret_string += f"It left the postcure window between the following times:\n {interrupt_times}"
+                ret_string += f"It left the postcure window between the following times:\n {interrupt_times}\n"
         else:
-            ret_string += "No cure cycle detected."
+            ret_string += "No postcure detected."
         return ret_string
 
     @staticmethod

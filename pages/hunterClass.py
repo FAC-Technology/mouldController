@@ -4,9 +4,30 @@ import requests
 import socket
 from . import defaults
 from threading import Thread
+import time
 
 
-def try_pwd(target, guess):
+def try_pwd(target, guess, old):
+    # try once the old location and password for efficiency
+    if old != 0 and old['pwd'] == guess:
+        try:
+            response = requests.get(f"http://{old['location']}",
+                                    headers=defaults.headers,
+                                    cookies=defaults.cookies,
+                                    auth=(old['user'], old['pwd']),
+                                    verify=False,
+                                    timeout=1)
+            if response.status_code == 200:
+                print(f"Got {old['name']}pwd correct first time")
+                return True
+        except (requests.exceptions.ConnectTimeout,
+                requests.exceptions.ReadTimeout) as e:
+            print(f'Struggling with trying pwds for raeson of {e}')
+            defaults.log.warning(msg=f"{target['name']} timed out over a second")
+        except requests.exceptions.ConnectionError as e:
+            print(f'Struggling with trying pwds for raeson of {e}')
+    print(f"Didn't get password right for {target['location']} right first time")
+    print(f"Target was {target} and old was {old}")
     try:
         response = requests.get(f"http://{target['location']}",
                                 headers=defaults.headers,
@@ -16,13 +37,13 @@ def try_pwd(target, guess):
                                 timeout=1)
         if response.status_code == 200:
             return True
-        else:
-            return False
     except (requests.exceptions.ConnectTimeout,
-            requests.exceptions.ReadTimeout):
+            requests.exceptions.ReadTimeout) as e:
+        print(f'Struggling with trying pwds for raeson of {e}')
         defaults.log.warning(msg=f"{target['name']} timed out over a second")
-    except requests.exceptions.ConnectionError:
-        return False
+    except requests.exceptions.ConnectionError as e:
+        print(f'Struggling with trying pwds for raeson of {e}')
+    return False
 
 
 class Hunter:
@@ -33,20 +54,28 @@ class Hunter:
         _s.close()
         self._ip_prefix = '.'.join(_full_ip.split('.')[:-1]) + '.'
         self.nds = []
+        self.old_nds = []
+
         self.found_count = 0
         self.dac_count = 8
         self._pwd_list = [f'qqqqqqq{i+1}' for i in range(self.dac_count)]
         self.populate_list()
 
     def populate_list(self):
+        t1 = time.time()
         self.find_nd_ips()
+        t2 = time.time()
+        print(f'Finding ips took {round((t2 - t1) * 1e3)}ms')
         self.pwd_test()
-        for i, nd in enumerate(self.nds):
+        print(f'Password testing took {round((time.time() - t2) * 1e3)}ms')
+
+        for nd in self.nds:
             if nd['name'] == '':
                 self.nds.remove(nd)
         self.found_count = len(self.nds)
 
     def find_nd_ips(self):
+        self.old_nds = self.nds
         self.nds = []  # wipe nanodac list
         threads = []  # list of threads
         finds = []  # list of locations where ND identified
@@ -70,11 +99,14 @@ class Hunter:
                              'pwd': ''})
 
     def pwd_test(self):
-        for i, nd in enumerate(self.nds):
+        if len(self.old_nds) != len(self.nds):
+            self.old_nds += [0] * (len(self.nds)-len(self.old_nds))  # add zeros to non tried NDs
+        for i, (nd, old) in enumerate(zip(self.nds, self.old_nds)):
             for j, pwd in enumerate(self._pwd_list):
-                if try_pwd(nd, pwd):
+                if try_pwd(nd, pwd, old):
                     self.nds[i]['name'] = f'dac_{j+1}'
                     self.nds[i]['pwd'] = pwd
+                    break
 
     def ping_dac(self, i):
         try:

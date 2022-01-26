@@ -12,8 +12,10 @@ from .buttonPanel import ButtonPanel
 from .dacClass import DacClass
 from .tempGraph import TempGraph
 from .hunterClass import Hunter
+
 try:
     import pyi_splash
+
     splash_present = True
 except ModuleNotFoundError:
     splash_present = False
@@ -52,7 +54,8 @@ class MouldMonitor(tk.Tk):
             self.hunter.populate_list()
             time.sleep(1)
         for nd in self.hunter.nds:
-            self.dac_list.append(DacClass(name=nd['name'], address=nd['location']))
+            if nd['name'] not in [nanodac.name for nanodac in self.dac_list]:
+                self.dac_list.append(DacClass(name=nd['name'], address=nd['location']))
 
         if splash:
             pyi_splash.close()
@@ -107,8 +110,13 @@ class MouldMonitor(tk.Tk):
         for j, dac in enumerate(self.dac_list):
             if not dac.initialised and dac.temperatureData:
                 dac.initialised = True
-                self.a.plot_date(defaults.downsample_to_max(dac.timeData, defaults.MAXIMUM_POINTS),  # x list
-                                 defaults.downsample_to_max(dac.temperatureData, defaults.MAXIMUM_POINTS),  # y list
+                # make the lists out of a downsampled history + a full res previous 50 points for plotting goodness.
+                x_list = defaults.downsample_to_max(dac.timeData[:-50], defaults.MAXIMUM_POINTS) \
+                         + dac.timeData[-50:]
+                y_list = defaults.downsample_to_max(dac.temperatureData[:-50], defaults.MAXIMUM_POINTS) \
+                         + dac.temperatureData[-50:]
+                self.a.plot_date(x_list,  # x list
+                                 y_list,  # y list
                                  defaults.lineStyles[j % len(defaults.lineStyles)],  # line style, loop round
                                  label=dac.name,  # label
                                  xdate=True)
@@ -128,8 +136,14 @@ class MouldMonitor(tk.Tk):
         self.a.title.set_text(dt.datetime.strftime(now, defaults.TIME_FORMAT))
         for j, dac in enumerate(self.dac_list):
             if dac.active and dac.initialised and not dac.currentPlot:
-                self.a.lines[j].set_xdata(defaults.downsample_to_max(dac.timeData, defaults.MAXIMUM_POINTS))
-                self.a.lines[j].set_ydata(defaults.downsample_to_max(dac.temperatureData, defaults.MAXIMUM_POINTS))
+                start_time = time.time()
+                x_list = defaults.downsample_to_max(dac.timeData[:-50], defaults.MAXIMUM_POINTS) \
+                         + dac.timeData[-50:]
+                y_list = defaults.downsample_to_max(dac.temperatureData[:-50], defaults.MAXIMUM_POINTS) \
+                         + dac.temperatureData[-50:]
+                self.a.lines[j].set_xdata(x_list)
+                self.a.lines[j].set_ydata(y_list)
+                print(f'Plotting took {(time.time() - start_time) * 1e3}ms')
                 dac.currentPlot = True  # label dac plot as up to date.
         left_limit = min([dac.timeData[0] for dac in self.dac_list if dac.timeData])
         right_limit = max([dac.timeData[-1] for dac in self.dac_list if dac.timeData])
@@ -137,15 +151,22 @@ class MouldMonitor(tk.Tk):
         self.a.set_xlim(left_limit - dt.timedelta(minutes=5),
                         right_limit + dt.timedelta(minutes=5))
 
-
     def update_dacs(self):
         self.ip_check_time = dt.datetime.now()
+        start_time = time.time()
         self.hunter.populate_list()
+        print(f'Populating list took {round((time.time() - start_time) * 1e3)}ms')
+
         for nd in self.hunter.nds:
-            if nd['location'] not in [dac.address for dac in self.dac_list]:
+            for dac in self.dac_list:
+                if nd['name'] in [ndac.name for ndac in self.dac_list]:
+                    print(f"Updating {dac.name} from {dac.address} to {nd['location']}")
+                    dac.address = nd['location']
+
+            if nd['name'] not in [dac.name for dac in self.dac_list]:
                 self.dac_list.append(DacClass(name=nd['name'], address=nd['location']))
                 defaults.log.info(f"Adding {nd['name']} to list of DACs")
-                if self.running: # only add if panel has been created
+                if self.running:  # only add if panel has been created
                     print('Adding new dac buttons')
                     self.button_list.append({})
                     self.button_list[-1]['name'] = self.dac_list[-1].name
