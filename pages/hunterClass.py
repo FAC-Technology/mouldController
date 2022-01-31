@@ -22,10 +22,10 @@ def try_pwd(target, guess, old):
                 return True
         except (requests.exceptions.ConnectTimeout,
                 requests.exceptions.ReadTimeout) as e:
-            print(f'Struggling with trying pwds for raeson of {e}')
+            print(f'Struggling with trying pwds for reason of {e}')
             defaults.log.warning(msg=f"{target['name']} timed out over a second")
         except requests.exceptions.ConnectionError as e:
-            print(f'Struggling with trying pwds for raeson of {e}')
+            print(f'Struggling with trying pwds for reason of {e}')
     print(f"Didn't get password right for {target['location']} right first time")
     print(f"Target was {target} and old was {old}")
     try:
@@ -39,10 +39,10 @@ def try_pwd(target, guess, old):
             return True
     except (requests.exceptions.ConnectTimeout,
             requests.exceptions.ReadTimeout) as e:
-        print(f'Struggling with trying pwds for raeson of {e}')
+        print(f'Struggling with trying pwds for reason of {e}')
         defaults.log.warning(msg=f"{target['name']} timed out over a second")
     except requests.exceptions.ConnectionError as e:
-        print(f'Struggling with trying pwds for raeson of {e}')
+        print(f'Struggling with trying pwds for reason of {e}')
     return False
 
 
@@ -55,24 +55,22 @@ class Hunter:
         self._ip_prefix = '.'.join(_full_ip.split('.')[:-1]) + '.'
         self.nds = []
         self.old_nds = []
-
-        self.found_count = 0
         self.dac_count = 8
         self._pwd_list = [f'qqqqqqq{i+1}' for i in range(self.dac_count)]
         self.populate_list()
 
-    def populate_list(self):
+    def populate_list(self):  # function fills the nd list
         t1 = time.time()
         self.find_nd_ips()
         t2 = time.time()
         print(f'Finding ips took {round((t2 - t1) * 1e3)}ms')
-        self.pwd_test()
+        if self.nds:
+            self.pwd_test()
         print(f'Password testing took {round((time.time() - t2) * 1e3)}ms')
 
-        for nd in self.nds:
+        for nd in self.nds:  # if a location couldn't be found, ignore it
             if nd['name'] == '':
                 self.nds.remove(nd)
-        self.found_count = len(self.nds)
 
     def find_nd_ips(self):
         self.old_nds = self.nds
@@ -92,23 +90,24 @@ class Hunter:
             if result is not None:
                 finds.append(result)
 
-        for suffix in finds:  # rebuild ND list
+        for suffix in finds:  # rebuild ND list without passwords or names
             self.nds.append({'location': f'{self._ip_prefix}{suffix}',
                              'name': '',
                              'user': 'admin',
                              'pwd': ''})
 
-    def pwd_test(self):
+    def pwd_test(self):  # try every password in every nanodac until the correct is found
         if len(self.old_nds) != len(self.nds):
             self.old_nds += [0] * (len(self.nds)-len(self.old_nds))  # add zeros to non tried NDs
+
         for i, (nd, old) in enumerate(zip(self.nds, self.old_nds)):
             for j, pwd in enumerate(self._pwd_list):
                 if try_pwd(nd, pwd, old):
-                    self.nds[i]['name'] = f'dac_{j+1}'
+                    self.nds[i]['name'] = f'dac {j+1}'
                     self.nds[i]['pwd'] = pwd
                     break
 
-    def ping_dac(self, i):
+    def ping_dac(self, i):  # function to determine if the answer is from a Eurotherm nanodac
         try:
             response = requests.get(f'http://{self._ip_prefix}{i}',
                                     headers=defaults.headers,

@@ -12,6 +12,6 @@ class TempGraph(tk.Frame):
         label = tk.Label(self, text="Mould Heater Readout", font=defaults.LARGE_FONT)
         label.pack(pady=10, padx=10)
 
-        canvas = FigureCanvasTkAgg(figure, self)
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        self.canvas = FigureCanvasTkAgg(figure, self)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)

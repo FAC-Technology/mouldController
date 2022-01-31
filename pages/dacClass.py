@@ -6,7 +6,7 @@ from random import random
 
 import matplotlib.dates as mdates
 import matplotlib.patches as patches
-
+import time
 import requests
 from matplotlib import style
 from matplotlib.figure import Figure
@@ -102,20 +102,23 @@ class DacClass:
             'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8,de;q=0.7',
         }
         try:
+            start_time = time.time()
             response = requests.get(f'http://{self.address}/numerics',
                                     headers=headers,
                                     cookies=cookies,
                                     auth=(self._user, self._pwd),
                                     verify=False,
                                     timeout=0.2)
+            if response.status_code == 403:
+                print(f"{self.name} was not unlocked. Check pwd or log out of engineer on device.")
         except (requests.exceptions.ConnectTimeout,
                 requests.exceptions.ReadTimeout,
                 requests.exceptions.ConnectionError) as e:
             self.connected = False
-            print(f'Struggling with data collection for raeson of {e}')
+            print(f'Struggling with data collection for reason of {e}')
             defaults.log.info(msg=f"Couldn't reach {self.name}, connection error")
             return
-
+        print(f'Scraping data took {round((time.time() - start_time) * 1e3)}ms')
         if 'Control Temp' in response.text:
             temp_positions = [7, 10, 13, 16]  # positions in the string of temperature values
             defaults.log.info(f'Got string {response.text} from {self.name}')
@@ -129,7 +132,6 @@ class DacClass:
                 temperature = float(temp_string)
                 self.connected = True
                 self.temperatureData.append(temperature)
-                print(f'Got tc1, {temperature}, length of array now {len(self.temperatureData)}')
                 self.timeData.append(dt.datetime.now())
                 all_temps = []
                 for indx in temp_positions:

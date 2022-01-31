@@ -1,5 +1,5 @@
 import datetime as dt
-import re
+import os
 import time
 import tkinter as tk
 
@@ -47,10 +47,10 @@ class MouldMonitor(tk.Tk):
         self.old_ip_list = []  # used for comparison
         self.new_ip_list = []  # ip list of DACs
         self.hunter = Hunter()  # create hunter, which in __init__ searches for dacs on network
-        if self.hunter.found_count == 0:
+        if not self.hunter.nds:
             print("Couldn't find any nanodacs, waiting to find one to proceed")
 
-        while self.hunter.found_count == 0:
+        while not self.hunter.nds:
             self.hunter.populate_list()
             time.sleep(1)
         for nd in self.hunter.nds:
@@ -64,11 +64,10 @@ class MouldMonitor(tk.Tk):
         while not any(dacs_plottable):
             dacs_plottable = [dac.temperatureData for dac in self.dac_list]
             if not any(dacs_plottable):
+                time.sleep(4)
+                self.update_dacs()
                 for dac in self.dac_list:
                     dac.scrape_data()
-                    time.sleep(1)
-                self.update_ip_list()
-
         print('Found at least one dac to plot')
         self.running = True
         # title
@@ -111,10 +110,14 @@ class MouldMonitor(tk.Tk):
             if not dac.initialised and dac.temperatureData:
                 dac.initialised = True
                 # make the lists out of a downsampled history + a full res previous 50 points for plotting goodness.
-                x_list = defaults.downsample_to_max(dac.timeData[:-50], defaults.MAXIMUM_POINTS) \
-                         + dac.timeData[-50:]
-                y_list = defaults.downsample_to_max(dac.temperatureData[:-50], defaults.MAXIMUM_POINTS) \
-                         + dac.temperatureData[-50:]
+                if len(dac.timeData) > 55:
+                    x_list = defaults.downsample_to_max(dac.timeData[:-50], defaults.MAXIMUM_POINTS) \
+                             + dac.timeData[-50:]
+                    y_list = defaults.downsample_to_max(dac.temperatureData[:-50], defaults.MAXIMUM_POINTS) \
+                             + dac.temperatureData[-50:]
+                else:
+                    x_list = dac.timeData
+                    y_list = dac.temperatureData
                 self.a.plot_date(x_list,  # x list
                                  y_list,  # y list
                                  defaults.lineStyles[j % len(defaults.lineStyles)],  # line style, loop round
@@ -137,14 +140,19 @@ class MouldMonitor(tk.Tk):
         for j, dac in enumerate(self.dac_list):
             if dac.active and dac.initialised and not dac.currentPlot:
                 start_time = time.time()
-                x_list = defaults.downsample_to_max(dac.timeData[:-50], defaults.MAXIMUM_POINTS) \
-                         + dac.timeData[-50:]
-                y_list = defaults.downsample_to_max(dac.temperatureData[:-50], defaults.MAXIMUM_POINTS) \
-                         + dac.temperatureData[-50:]
+                if len(dac.timeData) > 55:
+                    x_list = defaults.downsample_to_max(dac.timeData[:-50], defaults.MAXIMUM_POINTS) \
+                             + dac.timeData[-50:]
+                    y_list = defaults.downsample_to_max(dac.temperatureData[:-50], defaults.MAXIMUM_POINTS) \
+                             + dac.temperatureData[-50:]
+                else:
+                    x_list = dac.timeData
+                    y_list = dac.temperatureData
                 self.a.lines[j].set_xdata(x_list)
                 self.a.lines[j].set_ydata(y_list)
                 print(f'Plotting took {(time.time() - start_time) * 1e3}ms')
                 dac.currentPlot = True  # label dac plot as up to date.
+
         left_limit = min([dac.timeData[0] for dac in self.dac_list if dac.timeData])
         right_limit = max([dac.timeData[-1] for dac in self.dac_list if dac.timeData])
 
