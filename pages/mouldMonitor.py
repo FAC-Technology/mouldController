@@ -2,6 +2,7 @@ import datetime as dt
 import os
 import time
 import tkinter as tk
+import sys
 
 import matplotlib.dates as m_dates
 from matplotlib import style
@@ -34,7 +35,7 @@ class MouldMonitor(tk.Tk):
     a = f.add_subplot(111)
     a.set_ylabel('Temperature (C)')
     a.set_xlabel('Clock Time')
-    a.set_ylim(15, 110)
+    a.set_ylim(0, 110)
     a.xaxis.set_major_formatter(m_dates.DateFormatter("%H:%M"))
 
     def __init__(self, splash, *args, **kwargs):
@@ -118,12 +119,15 @@ class MouldMonitor(tk.Tk):
                 else:
                     x_list = dac.timeData
                     y_list = dac.temperatureData
+                print(f"Initialising plot for {dac.name} with {len(x_list)} points.")
                 self.a.plot_date(x_list,  # x list
                                  y_list,  # y list
                                  defaults.lineStyles[j % len(defaults.lineStyles)],  # line style, loop round
                                  label=dac.name,  # label
                                  xdate=True)
         self.f.legend()
+        # self.graph_frame.canvas.draw()
+        # self.f.canvas.draw()
 
     def refresh_data(self):
         for dac in self.dac_list:
@@ -137,10 +141,10 @@ class MouldMonitor(tk.Tk):
     def update_plots(self, i):
         now = dt.datetime.now()
         self.a.title.set_text(dt.datetime.strftime(now, defaults.TIME_FORMAT))
+        blits = [self.a.title]
         for j, dac in enumerate(self.dac_list):
             if dac.active and dac.initialised and not dac.currentPlot:
-                start_time = time.time()
-                if len(dac.timeData) > 55:
+                if False:
                     x_list = defaults.downsample_to_max(dac.timeData[:-50], defaults.MAXIMUM_POINTS) \
                              + dac.timeData[-50:]
                     y_list = defaults.downsample_to_max(dac.temperatureData[:-50], defaults.MAXIMUM_POINTS) \
@@ -150,14 +154,20 @@ class MouldMonitor(tk.Tk):
                     y_list = dac.temperatureData
                 self.a.lines[j].set_xdata(x_list)
                 self.a.lines[j].set_ydata(y_list)
-                print(f'Plotting took {(time.time() - start_time) * 1e3}ms')
                 dac.currentPlot = True  # label dac plot as up to date.
+                blits.append(self.a.lines[j])
 
-        left_limit = min([dac.timeData[0] for dac in self.dac_list if dac.timeData])
-        right_limit = max([dac.timeData[-1] for dac in self.dac_list if dac.timeData])
-
-        self.a.set_xlim(left_limit - dt.timedelta(minutes=5),
-                        right_limit + dt.timedelta(minutes=5))
+        left_limit = min([dac.timeData[0] for dac in self.dac_list if dac.timeData])  # left limit is left most of any
+        right_limit = max([dac.timeData[-1] for dac in self.dac_list if dac.timeData])  # vice versa for right
+        left_limit = left_limit.replace(microsecond=0, second=0, minute=0, hour=0)
+        right_limit = right_limit.replace(microsecond=0, second=0, minute=0, hour=0)
+        right_limit = right_limit + dt.timedelta(days=1)
+        #
+        # left_limit = defaults.roundTime(left_limit - dt.timedelta(minutes=5), roundTo=180)  # round to help blitting
+        # right_limit = defaults.roundTime(right_limit + dt.timedelta(minutes=5), roundTo=180)  # same
+        self.a.set_xlim(left_limit,
+                        right_limit)
+        return self.f.artists
 
     def update_dacs(self):
         self.ip_check_time = dt.datetime.now()

@@ -13,5 +13,4 @@ class TempGraph(tk.Frame):
         label.pack(pady=10, padx=10)
 
         self.canvas = FigureCanvasTkAgg(figure, self)
-        self.canvas.draw()
         self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)

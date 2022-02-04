@@ -1,5 +1,4 @@
 import datetime as dt
-import math
 import os
 import re
 from random import random
@@ -133,6 +132,8 @@ class DacClass:
                 self.connected = True
                 self.temperatureData.append(temperature)
                 self.timeData.append(dt.datetime.now())
+                self.currentPlot = False
+
                 all_temps = []
                 for indx in temp_positions:
                     try:
@@ -142,7 +143,6 @@ class DacClass:
                 with open(self.fullLogName, "a+") as f:
                     f.write(f"{dt.datetime.strftime(self.timeData[-1], defaults.DATETIME_FORMAT)}, \
                                 {all_temps}\n")
-                self.currentPlot = False
             except IndexError:
                 self.connected = False
                 defaults.log.info(msg=f"Couldn't reach {self.name}, connection error. Possible thermocouple issue.")

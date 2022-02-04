@@ -113,7 +113,7 @@ class Hunter:
                                     headers=defaults.headers,
                                     cookies=defaults.cookies,
                                     verify=False,
-                                    timeout=0.08)
+                                    timeout=0.12)
             if 'www-authenticate' in response.headers.keys():
                 if 'Eurotherm' in response.headers['www-authenticate']:
                     return i

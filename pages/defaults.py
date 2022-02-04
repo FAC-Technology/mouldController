@@ -1,7 +1,7 @@
 import logging
 from logging import handlers
 import os
-
+import datetime
 
 EXPORT_FOLDER = 'Mould Temperature Exports'
 LOGO_FILE = "FACT_LOGO.png"
@@ -59,6 +59,7 @@ headers = {
     'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8,de;q=0.7',
 }
 
+
 # downsize arrays to manageable plot sizes
 def downsample_to_proportion(rows, proportion):
     counter = 0.0
@@ -78,3 +79,14 @@ def downsample_to_proportion(rows, proportion):
 
 def downsample_to_max(rows, max_rows):
     return downsample_to_proportion(rows, max_rows / float(len(rows)))
+
+
+def roundTime(dt=None, roundTo=60):
+    """Round a datetime object to any time lapse in seconds
+   dt : datetime.datetime object, default now.
+   roundTo : Closest number of seconds to round to, default 1 minute.
+   Author: Thierry Husson 2012 - Use it as you want but don't blame me.
+   """
+    seconds = (dt.replace(tzinfo=None) - dt.min).seconds
+    rounding = (seconds + roundTo / 2) // roundTo * roundTo
+    return dt + datetime.timedelta(0, rounding - seconds, -dt.microsecond)
