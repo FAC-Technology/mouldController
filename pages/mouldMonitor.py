@@ -43,6 +43,7 @@ class MouldMonitor(tk.Tk):
         self.running = False
         self.ip_check_time = dt.datetime(1970, 1, 1)  # initialise a note of when IPs were last checked
         self.data_check_time = dt.datetime(1970, 1, 1)  # initialise a note of when data was last checked
+        self.msgbox_update_time = dt.datetime(1970, 1, 1)  # initialise a note of when msgbox was last updated
 
         self.dac_list = []  # list of all dacs, made from IP_ADDRESSES.txt
         self.old_ip_list = []  # used for comparison
@@ -127,6 +128,8 @@ class MouldMonitor(tk.Tk):
                                  defaults.lineStyles[j % len(defaults.lineStyles)],  # line style, loop round
                                  label=dac.name,  # label
                                  xdate=True)
+
+
         if updated:
             self.f.legend()
 
@@ -194,14 +197,14 @@ class MouldMonitor(tk.Tk):
                     self.f.legend().remove()
 
     def list_unreachables(self, msg_box):
-        disconnected_list = "! WARNING !\nCould not connect to:\n"
-        for dac in self.dac_list:
-            if not dac.connected:
-                disconnected_list += f"{dac.name}\n"
-        if any([not dac.connected for dac in self.dac_list]):  # only display if any disconnects found
-            self._write_to_box(msg_box, disconnected_list)
-        else:
-            self._write_to_box(msg_box, "Connected to all dacs")
+        self.msgbox_update_time = dt.datetime.now()
+        # the idea here is to keep the user up to date, ensuring all data is live.
+        self._write_to_box(msg_box, f"Mould temperatures:"
+                                    f"{dt.datetime.strftime(dt.datetime.now(), defaults.TIME_FORMAT)}\n" +
+                                    "\n".join([nd.name + ": " +
+                                               str(nd.temperatureData[0]) +
+                                               f"C (+{(dt.datetime.now() - nd.timeData[-1]).seconds}s)"
+                                               for nd in self.dac_list]))
 
     @staticmethod
     def _write_to_box(msg_box, text):

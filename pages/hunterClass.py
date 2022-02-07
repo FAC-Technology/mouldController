@@ -27,7 +27,6 @@ def try_pwd(target, guess, old):
         except requests.exceptions.ConnectionError as e:
             print(f'Struggling with trying pwds for reason of {e}')
     print(f"Didn't get password right for {target['location']} right first time")
-    print(f"Target was {target} and old was {old}")
     try:
         response = requests.get(f"http://{target['location']}",
                                 headers=defaults.headers,
@@ -63,10 +62,10 @@ class Hunter:
         t1 = time.time()
         self.find_nd_ips()
         t2 = time.time()
-        print(f'Finding ips took {round((t2 - t1) * 1e3)}ms')
         if self.nds:
             self.pwd_test()
-        print(f'Password testing took {round((time.time() - t2) * 1e3)}ms')
+        print(f'\rFinding ips took {round((t2 - t1) * 1e3)}ms\n' +
+              f'Password testing took {round((time.time() - t2) * 1e3)}ms\r')
 
         for nd in self.nds:  # if a location couldn't be found, ignore it
             if nd['name'] == '':
@@ -97,8 +96,13 @@ class Hunter:
                              'pwd': ''})
 
     def pwd_test(self):  # try every password in every nanodac until the correct is found
-        if len(self.old_nds) != len(self.nds):
-            self.old_nds += [0] * (len(self.nds)-len(self.old_nds))  # add zeros to non tried NDs
+        # for old_nd in self.old_nds:
+        #     if old_nd['name'] not in [name for name in self.nds]:
+        #         self.old_nds.append(0)
+        if not self.old_nds:
+            self.old_nds += [0] * (len(self.nds)-len(self.old_nds))
+        # if len(self.old_nds) != len(self.nds):
+        #     self.old_nds += [0] * (len(self.nds)-len(self.old_nds))  # add zeros to non tried NDs
 
         for i, (nd, old) in enumerate(zip(self.nds, self.old_nds)):
             for j, pwd in enumerate(self._pwd_list):

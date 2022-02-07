@@ -5,8 +5,6 @@ import time
 from pages import defaults
 from pages.mouldMonitor import MouldMonitor
 from pages.defaults import PLOT_REFRESH_RATE
-import cProfile
-import pstats
 
 try:
     import pyi_splash
@@ -23,29 +21,17 @@ app = MouldMonitor(splash=splash_present)
 ani = animation.FuncAnimation(app.f, app.update_plots, interval=PLOT_REFRESH_RATE)
 defaults.log.info('Starting running')
 
-def main():
-    while app.is_running():
-        t0 = time.time()
-        with cProfile.Profile() as pr:
-            app.update()
+while app.is_running():
+    app.update()  # use Tkinter's update() function to keep things moving
 
-        deltaT = round(1000*(time.time() - t0))
-        if deltaT > 80:
-            print(f'App update took {deltaT} ms')
-            stats = pstats.Stats(pr)
-            stats.sort_stats(pstats.SortKey.TIME)
-            stats.print_stats()
-        with open('updatetimes.txt','a+') as f:
-            f.writelines([str(deltaT)+"\n"])
-        if (dt.datetime.now() - app.data_check_time).total_seconds() > defaults.DATA_REFRESH_RATE:
-            app.refresh_data()
+    if (dt.datetime.now() - app.data_check_time).total_seconds() > defaults.DATA_REFRESH_RATE:
+        app.refresh_data()
 
-        if (dt.datetime.now() - app.ip_check_time).total_seconds() > defaults.IP_CHECK_PERIOD:
-            app.update_dacs()
-            app.initialise_plots()
-            app.list_unreachables(app.button_frame.msg_box)
-        time.sleep(0.2)  # reduces CPU usage
+    if (dt.datetime.now() - app.msgbox_update_time).total_seconds() > 4 * defaults.DATA_REFRESH_RATE:
+        app.list_unreachables(app.button_frame.msg_box)
 
+    if (dt.datetime.now() - app.ip_check_time).total_seconds() > defaults.IP_CHECK_PERIOD:
+        app.update_dacs()
+        app.initialise_plots()
+    time.sleep(0.05)  # reduces CPU usage
 
-app.after(1000, main)
-app.mainloop()
