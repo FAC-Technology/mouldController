@@ -107,8 +107,10 @@ class MouldMonitor(tk.Tk):
         self.destroy()
 
     def initialise_plots(self):
+        updated = False
         for j, dac in enumerate(self.dac_list):
             if not dac.initialised and dac.temperatureData:
+                updated = True
                 dac.initialised = True
                 # make the lists out of a downsampled history + a full res previous 50 points for plotting goodness.
                 if len(dac.timeData) > 55:
@@ -125,9 +127,9 @@ class MouldMonitor(tk.Tk):
                                  defaults.lineStyles[j % len(defaults.lineStyles)],  # line style, loop round
                                  label=dac.name,  # label
                                  xdate=True)
-        self.f.legend()
-        # self.graph_frame.canvas.draw()
-        # self.f.canvas.draw()
+        if updated:
+            self.f.legend()
+
 
     def refresh_data(self):
         for dac in self.dac_list:
@@ -157,17 +159,17 @@ class MouldMonitor(tk.Tk):
                 dac.currentPlot = True  # label dac plot as up to date.
                 blits.append(self.a.lines[j])
 
-        left_limit = min([dac.timeData[0] for dac in self.dac_list if dac.timeData])  # left limit is left most of any
-        right_limit = max([dac.timeData[-1] for dac in self.dac_list if dac.timeData])  # vice versa for right
-        left_limit = left_limit.replace(microsecond=0, second=0, minute=0, hour=0)
-        right_limit = right_limit.replace(microsecond=0, second=0, minute=0, hour=0)
-        right_limit = right_limit + dt.timedelta(days=1)
+        left_limit = min([dac.timeData[0] for dac in self.dac_list if dac.timeData]) - dt.timedelta(minutes=5) # left limit is left most of any
+        right_limit = max([dac.timeData[-1] for dac in self.dac_list if dac.timeData]) + dt.timedelta(minutes=5)  # vice versa for right
+        # left_limit = left_limit.replace(microsecond=0, second=0, minute=0, hour=0)
+        # right_limit = right_limit.replace(microsecond=0, second=0, minute=0, hour=0)
+        # right_limit = right_limit + dt.timedelta(days=1)
         #
         # left_limit = defaults.roundTime(left_limit - dt.timedelta(minutes=5), roundTo=180)  # round to help blitting
         # right_limit = defaults.roundTime(right_limit + dt.timedelta(minutes=5), roundTo=180)  # same
         self.a.set_xlim(left_limit,
                         right_limit)
-        return self.f.artists
+
 
     def update_dacs(self):
         self.ip_check_time = dt.datetime.now()
