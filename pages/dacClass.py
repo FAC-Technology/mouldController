@@ -114,10 +114,10 @@ class DacClass:
                 requests.exceptions.ReadTimeout,
                 requests.exceptions.ConnectionError) as e:
             self.connected = False
-            print(f'Struggling with data collection for reason of {e}')
+            print(f'{self.name} struggling with data collection for reason of {e}')
             defaults.log.info(msg=f"Couldn't reach {self.name}, connection error")
             return
-        print(f'Scraping data took {round((time.time() - start_time) * 1e3)}ms')
+        print(f'{self.name} data collection took {round((time.time() - start_time) * 1e3)}ms')
         if 'Control Temp' in response.text:
             temp_positions = [7, 10, 13, 16]  # positions in the string of temperature values
             defaults.log.info(f'Got string {response.text} from {self.name}')

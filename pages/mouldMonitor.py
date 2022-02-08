@@ -11,6 +11,11 @@ from .dacClass import DacClass
 from .tempGraph import TempGraph
 from .hunterClass import Hunter
 
+# only relevant when complied as .exe
+try:
+    import pyi_splash
+except ModuleNotFoundError:
+    pass
 
 class MouldMonitor(tk.Tk):
     # generate the figure, possibly in the wrong place for the class

@@ -18,7 +18,7 @@ def try_pwd(target, guess, old):
                                     verify=False,
                                     timeout=1)
             if response.status_code == 200:
-                print(f"Got {old['name']}pwd correct first time")
+                print(f"Guessed {old['name']} correct first time")
                 return True
         except (requests.exceptions.ConnectTimeout,
                 requests.exceptions.ReadTimeout) as e:

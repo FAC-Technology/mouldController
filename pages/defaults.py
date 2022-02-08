@@ -24,6 +24,7 @@ SMALL_FONT = ("Arial", 12)
 LOG_FILE_NAMING = "Temperature Log {} {}.csv"
 FULL_LOG_FILE_NAMING = "Complete Temperature Log {} {}.csv"
 MAXIMUM_POINTS = 300  # maximum number of points to plot
+
 # check prerequisite files exist.
 # exists in /Documents/Mould Temperature Exports
 if not os.path.isdir(DESKTOP_PATH):  # check destination folder
