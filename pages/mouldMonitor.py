@@ -1,11 +1,8 @@
 import datetime as dt
-import os
 import time
 import tkinter as tk
-import sys
 
 import matplotlib.dates as m_dates
-from matplotlib import style
 from matplotlib.figure import Figure
 
 from . import defaults
@@ -13,15 +10,6 @@ from .buttonPanel import ButtonPanel
 from .dacClass import DacClass
 from .tempGraph import TempGraph
 from .hunterClass import Hunter
-
-try:
-    import pyi_splash
-
-    splash_present = True
-except ModuleNotFoundError:
-    splash_present = False
-
-style.use("ggplot")
 
 
 class MouldMonitor(tk.Tk):
@@ -49,8 +37,9 @@ class MouldMonitor(tk.Tk):
         self.old_ip_list = []  # used for comparison
         self.new_ip_list = []  # ip list of DACs
         self.hunter = Hunter()  # create hunter, which in __init__ searches for dacs on network
+
         if not self.hunter.nds:
-            print("Couldn't find any nanodacs, waiting to find one to proceed")
+            print("Proceeding when any one nanodac is found")
 
         while not self.hunter.nds:
             self.hunter.populate_list()
@@ -196,13 +185,13 @@ class MouldMonitor(tk.Tk):
                     self.button_list[-1]['buttons'] = self.button_frame.create_row(self.button_frame, self.dac_list[-1])
                     self.f.legend().remove()
 
-    def list_unreachables(self, msg_box):
+    def update_box(self, msg_box):
         self.msgbox_update_time = dt.datetime.now()
         # the idea here is to keep the user up to date, ensuring all data is live.
-        self._write_to_box(msg_box, f"Mould temperatures:"
-                                    f"{dt.datetime.strftime(dt.datetime.now(), defaults.TIME_FORMAT)}\n" +
+        self._write_to_box(msg_box, f"Mould temperatures @ "
+                                    f"{dt.datetime.strftime(dt.datetime.now(), defaults.TIME_FORMAT)}:\n" +
                                     "\n".join([nd.name + ": " +
-                                               str(nd.temperatureData[0]) +
+                                               str(nd.temperatureData[-1]) +
                                                f"C (+{(dt.datetime.now() - nd.timeData[-1]).seconds}s)"
                                                for nd in self.dac_list]))
 

@@ -6,6 +6,7 @@ from pages import defaults
 from pages.mouldMonitor import MouldMonitor
 from pages.defaults import PLOT_REFRESH_RATE
 
+# only relevant when complied as .exe
 try:
     import pyi_splash
     splash_present = True
@@ -24,12 +25,15 @@ defaults.log.info('Starting running')
 while app.is_running():
     app.update()  # use Tkinter's update() function to keep things moving
 
+    # update the data at intervals
     if (dt.datetime.now() - app.data_check_time).total_seconds() > defaults.DATA_REFRESH_RATE:
         app.refresh_data()
 
+    # update the msgbox at intervals
     if (dt.datetime.now() - app.msgbox_update_time).total_seconds() > 4 * defaults.DATA_REFRESH_RATE:
-        app.list_unreachables(app.button_frame.msg_box)
+        app.update_box(app.button_frame.msg_box)
 
+    # find new DACs at intervals
     if (dt.datetime.now() - app.ip_check_time).total_seconds() > defaults.IP_CHECK_PERIOD:
         app.update_dacs()
         app.initialise_plots()

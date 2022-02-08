@@ -59,6 +59,7 @@ class Hunter:
         self.populate_list()
 
     def populate_list(self):  # function fills the nd list
+        print('Hunting for nanodacs')
         t1 = time.time()
         self.find_nd_ips()
         t2 = time.time()
